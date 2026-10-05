@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>To-do List · UCVTS Student Tools</title>
+  <meta name="description" content="Folders for each class, tasks you can drag around, due dates and stars — saved on this device.">
+  <meta name="theme-color" content="#16295c" id="themeColor">
+  <link rel="icon" type="image/png" href="ucvts_logo.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- The same weather sky and school photo as everywhere else; reminders
+       keep firing while you plan here, too. -->
+  <canvas id="skyFar" aria-hidden="true"></canvas>
+  <canvas id="skyNear" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scene-photo" id="scenePhoto" aria-hidden="true"></div>
+
+  <div class="page" id="page">
+
+    <!-- ============ background switch ============ -->
+    <div class="top-bar">
+      <button class="motion-btn" id="focusBtn" type="button"
+              title="Hide the page and show just the school in the weather">Hide the page</button>
+      <button class="motion-btn" id="motionBtn" type="button" aria-pressed="true">Motion: on</button>
+    </div>
+
+    <!-- ============ header ============ -->
+    <header class="hero">
+      <a class="hero-home" href="index.html" title="Back to UCVTS Student Tools">
+        <span class="hero-logo" aria-hidden="true"><img src="ucvts_logo.png" alt="" decoding="async"></span>
+        <h1>To-do List</h1>
+      </a>
+    </header>
+
+    <p class="page-lead">
+      A folder for each class. Add tasks with a due date, drag them around,
+      star the ones that matter, and cross them off. Everything is saved on
+      this device and stays here between visits.
+    </p>
+
+    <!-- The board is built entirely by todo.js from the saved list. -->
+    <div class="todo-wrap">
+
+      <div class="todo-bar">
+        <button type="button" class="btn" id="addFolderBtn">＋ Add a folder</button>
+        <p class="todo-hint muted">
+          Hover a folder for its <span aria-hidden="true">⋯</span> menu. Right-click a
+          task to edit or delete it.
+        </p>
+      </div>
+
+      <div class="todo-board" id="todoBoard" aria-label="Task folders"></div>
+
+    </div>
+
+    <p class="page-foot muted">
+      Made for a browser on this device only — no account, no server, nothing
+      leaves this computer.
+    </p>
+
+  </div>
+
+  <!-- Reminder pop-ups — the engine fires on every page of the site. -->
+  <div class="toasts" id="toasts" aria-live="assertive"></div>
+
+  <!-- ---------- the task lightbox ---------- -->
+  <div class="modal" id="taskModal" hidden>
+    <div class="modal-backdrop" data-close="taskModal"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+      <h2 class="modal-title" id="taskModalTitle">New task</h2>
+
+      <label class="field">
+        <span class="field-label">Task</span>
+        <input type="text" id="taskName" maxlength="140" placeholder="What needs doing?" autocomplete="off">
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">Due date <span class="field-opt">optional</span></span>
+          <input type="date" id="taskDue">
+        </label>
+        <label class="field">
+          <span class="field-label">Due time <span class="field-opt">optional</span></span>
+          <input type="time" id="taskTime">
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="field-label">Subject</span>
+        <select id="taskSubject"></select>
+      </label>
+
+      <label class="field" id="taskOtherField" hidden>
+        <span class="field-label">Class or club name</span>
+        <input type="text" id="taskOther" maxlength="80" placeholder="e.g. Robotics Club" autocomplete="off">
+      </label>
+
+      <p class="field-error" id="taskError" hidden></p>
+
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" data-close="taskModal">Cancel</button>
+        <button type="button" class="btn" id="taskSaveBtn">Save task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- the folder lightbox (new & rename share it) ---------- -->
+  <div class="modal" id="folderModal" hidden>
+    <div class="modal-backdrop" data-close="folderModal"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="folderModalTitle">
+      <h2 class="modal-title" id="folderModalTitle">New folder</h2>
+
+      <label class="field">
+        <span class="field-label">Folder name</span>
+        <input type="text" id="folderName" maxlength="60" placeholder="e.g. Algebra 2" autocomplete="off">
+      </label>
+
+      <p class="field-error" id="folderError" hidden></p>
+
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" data-close="folderModal">Cancel</button>
+        <button type="button" class="btn" id="folderSaveBtn">Save folder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------- the right-click menu ---------- -->
+  <div class="ctx-menu" id="ctxMenu" hidden role="menu">
+    <button type="button" role="menuitem" data-ctx="edit">Edit task</button>
+    <button type="button" role="menuitem" data-ctx="delete" class="ctx-danger">Delete task</button>
+  </div>
+
+  <!-- shown briefly when the page fades away, so it's clear how to get it back -->
+  <p class="scene-hint" id="sceneHint" aria-hidden="true">click anywhere to bring it back</p>
+
+  <script src="calendar.js"></script>
+  <script src="day.js"></script>
+  <script src="clock.js"></script>
+  <script src="sky.js"></script>
+  <script src="scene.js"></script>
+  <script src="reminders.js"></script>
+  <script src="todo.js"></script>
+</body>
+</html>

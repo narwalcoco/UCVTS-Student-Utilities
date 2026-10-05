@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en" data-sky="cloud" data-day="night">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Developer — UCVTS Student Tools</title>
+  <link rel="icon" type="image/png" href="ucvts_logo.png">
+  <!-- The app's own stylesheet, so every swatch below is the real thing. -->
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Only layout lives here. Colours, buttons, cards and the palettes all
+       come from styles.css — if this page ever disagrees with the app, the
+       app is right and this is a bug. */
+
+    .dev { width: 100%; max-width: 1600px; margin: 0 auto; padding: 14px clamp(12px, 2vw, 26px) 36px; box-sizing: border-box; }
+
+    .dev-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin: 0 0 2px; }
+    .dev-head h1 { margin: 0; font-size: 24px; }
+    .dev-back { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--accent); text-decoration: none; }
+    .dev-back:hover { text-decoration: underline; }
+    .dev-lede { max-width: 92ch; margin: 0 0 12px; }
+
+    /* The controls column scales with the window width, and the two collapse
+       to one column before they get tight. */
+    .dev-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(290px, 24vw); gap: 14px; align-items: start; }
+    @media (max-width: 1040px) { .dev-split { grid-template-columns: 1fr; } }
+
+    .dev-preview { margin: 0; min-width: 0; }
+
+    .dev-frame-box {
+      display: grid;
+      place-items: start center;
+      /* Fit the viewport: the header, lede and URL line take the rest. */
+      height: clamp(320px, calc(100vh - 250px), 880px);
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius) var(--radius) 0 0;
+      background: rgba(6, 12, 30, 0.4);
+    }
+    .dev-frame-box iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #0a1533;
+      transition: width 0.2s ease;
+    }
+    .dev-url {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11.5px;
+      color: var(--muted);
+      padding: 9px 13px;
+      border: 1px solid var(--card-border);
+      border-top: 0;
+      border-radius: 0 0 var(--radius) var(--radius);
+      background: rgba(6, 12, 30, 0.25);
+      overflow-wrap: anywhere;
+    }
+    .dev-note { margin: 10px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    /* The controls stay in view while you compare grids further down, and
+       never run past the viewport — they scroll inside their own card. */
+    .dev-controls { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
+    @media (max-width: 1040px) { .dev-controls { position: static; max-height: none; overflow: visible; } }
+
+    .dev-grid { display: grid; gap: 12px; margin-top: 4px; }
+    .dev-grid.weather { grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); }
+    .dev-grid.light { grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); }
+
+    .tile { margin: 0; }
+
+    /* These carry data-sky / data-day / data-part, so every colour inside
+       them is resolved by the real palette rules in styles.css. */
+    .tile-stage {
+      position: relative;
+      height: 116px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+    }
+
+    /* Mirrors .scene-photo in styles.css, including the dim the page casts
+       while it is up, which is part of the photo's filter and not a layer over
+       it. There is no scrim element to keep in step any more. */
+    .tile-photo {
+      position: absolute;
+      inset: 0;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+      filter: brightness(calc(var(--photo-brightness) * (1 - 0.55 * var(--scene-dim))))
+              saturate(var(--photo-sat)) sepia(var(--photo-warm));
+    }
+
+    .tile-card {
+      position: absolute;
+      left: 7px;
+      right: 7px;
+      bottom: 7px;
+      padding: 6px 8px;
+      border: 1px solid var(--card-border);
+      border-radius: 9px;
+      background: var(--card);
+    }
+
+    .tile-title { display: block; font-size: 9.5px; font-weight: 800; color: var(--text); }
+    .tile-sub { display: block; font-size: 8.5px; color: var(--muted); }
+    .tile-meta { display: flex; align-items: center; gap: 5px; margin-top: 4px; }
+    .tile-accent { display: inline-block; width: 18px; height: 4px; border-radius: 2px; background: var(--accent); }
+
+    /* The fixed A/B identity colours, read straight from :root. These used to
+       be a hardcoded copy, which would have silently drifted from the app. */
+    .tile-ab {
+      display: inline-grid;
+      place-items: center;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      font-size: 7px;
+      font-weight: 800;
+      font-style: normal;
+    }
+    .ab-a { background: linear-gradient(180deg, var(--day-a-lit), var(--day-a)); color: #47081b; }
+    .ab-b { background: linear-gradient(180deg, var(--day-b-lit), var(--day-b)); color: #0b2350; }
+
+    .tile figcaption { margin-top: 5px; font-size: 11px; font-weight: 700; color: var(--muted); text-align: center; }
+  </style>
+</head>
+<body>
+
+  <div class="dev">
+
+    <header class="dev-head">
+      <h1>Developer</h1>
+      <a class="dev-back" href="index.html">&larr; Back to the site</a>
+    </header>
+    <p class="muted dev-lede">
+      Pick a page, then pin a sky, an hour, a season and motion and watch that page react
+      in the frame below. Nothing here saves anything &mdash; the app keeps its own
+      settings, and a pinned value never writes back.
+    </p>
+
+    <div class="dev-split">
+
+      <section class="card dev-preview">
+        <h2>Live preview</h2>
+        <div class="dev-frame-box">
+          <iframe id="frame" title="Live preview of a page of the site"></iframe>
+        </div>
+        <div class="dev-url" id="urlOut"></div>
+        <p class="dev-note">
+          Some pages reach the network: the calculator fetches its emulator from
+          testnav.com, and every page fetches the weather. Offline, both fall back to
+          the site's own drawing.
+        </p>
+      </section>
+
+      <section class="card dev-controls">
+        <h2>Controls</h2>
+
+        <div class="sim-section">Page</div>
+        <div class="sim-chips" id="pageBtns"></div>
+
+        <div class="sim-section">Sky</div>
+        <div class="sim-chips" id="skyBtns"></div>
+
+        <div class="sim-section">Time of day</div>
+        <div class="sim-chips" id="partBtns"></div>
+
+        <div class="sim-section">Season</div>
+        <div class="sim-chips" id="seasonBtns"></div>
+
+        <div class="sim-section">Motion</div>
+        <div class="sim-chips" id="motionBtns"></div>
+
+        <div class="sim-section">Idle fade</div>
+        <div class="sim-chips" id="focusBtns"></div>
+
+        <div class="sim-section">Clock &amp; day card</div>
+        <div class="sim-chips" id="dayBtns"></div>
+
+        <div class="sim-section">Preview width</div>
+        <div class="sim-chips" id="widthBtns"></div>
+
+        <p class="sim-dev">
+          <a id="openTab" href="index.html" target="_blank" rel="noopener">Open this view in a new tab &rarr;</a>
+        </p>
+      </section>
+
+    </div>
+
+    <section class="card">
+      <h2>All twelve skies</h2>
+      <p class="muted">
+        Every palette with a card, its muted text, the UI accent and the fixed A/B badges sitting on
+        top. This is the grid that answers &ldquo;can I still read this?&rdquo; &mdash; if a badge or a
+        line of text goes mushy against a sky, it shows up here.
+      </p>
+      <div class="dev-grid weather" id="weatherGrid"></div>
+    </section>
+
+    <section class="card">
+      <h2>Every season, every hour</h2>
+      <p class="muted">
+        The school photo with the real light values applied, shown the way it looks once the page has
+        faded away. This is the grid to tune: if December&rsquo;s morning looks too dark, or
+        dusk kills the building, the numbers to change are the four lines in the
+        <b>Light</b> block of <code>styles.css</code>.
+      </p>
+      <div class="dev-grid light" id="lightGrid"></div>
+    </section>
+
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* The pages of the site, in the order the landing page lists them. Every
+       one of them loads the shared stack (clock, sky, scene, reminders), so
+       every pinned value below means the same thing on each. */
+    var PAGES = [
+      { v: 'index.html', label: 'Landing' },
+      { v: 'class-reminder.html', label: 'Class reminder' },
+      { v: 'focus-timer.html', label: 'Focus timer' },
+      { v: 'calculator.html', label: 'Calculator' },
+      { v: 'todo.html', label: 'To-do list' }
+    ];
+
+    var SKIES = ['clear', 'cloud', 'rain', 'storm', 'snow', 'fog'];
+    var SKY_NAME = { clear: 'Clear', cloud: 'Cloudy', rain: 'Rain', storm: 'Thunderstorms', snow: 'Snow', fog: 'Fog' };
+    var PARTS = ['dawn', 'day', 'dusk', 'night'];
+    var PART_NAME = { dawn: 'Dawn', day: 'Day', dusk: 'Dusk', night: 'Night' };
+    var SEASONS = ['autumn', 'winter', 'spring', 'summer'];
+    var SEASON_NAME = { autumn: 'Autumn', winter: 'Winter', spring: 'Spring', summer: 'Summer' };
+
+    var frame = document.getElementById('frame');
+    var urlOut = document.getElementById('urlOut');
+    var openTab = document.getElementById('openTab');
+
+    var state = {
+      page: 'class-reminder.html',
+      sky: 'live', part: 'auto', season: 'auto',
+      motion: 'on', focus: 'page', width: 'desktop',
+      now: null
+    };
+
+    /* Dates that land on each shape the day card can take. All of these are
+       asserted by verify-calendar.js, so they stay honest if the calendar
+       is ever edited. */
+    var WHEN = [
+      { v: null, label: 'Live clock' },
+      { v: '2026-09-08T12:00', label: 'School day' },
+      { v: '2026-11-25T12:00', label: 'Short day' },
+      { v: '2026-09-03T12:00', label: 'Welcome back' },
+      { v: '2026-09-05T12:00', label: 'Weekend' },
+      { v: '2026-11-26T12:00', label: 'Holiday' },
+      { v: '2026-12-28T12:00', label: 'Recess' },
+      { v: '2027-07-15T12:00', label: 'Summer' },
+      { v: '2026-08-20T12:00', label: 'Before year' }
+    ];
+
+    function el(tag, cls, html) {
+      var n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (html != null) n.innerHTML = html;
+      return n;
+    }
+
+    /* ---------------- the preview ---------------- */
+
+    function queryString() {
+      var p = new URLSearchParams();
+      p.set('sky', state.sky);
+      p.set('part', state.part);
+      p.set('season', state.season);
+      p.set('motion', state.motion);
+      if (state.focus === 'away') p.set('focus', 'away');
+      if (state.now) p.set('now', state.now);
+      return p.toString();
+    }
+
+    var WIDTHS = { desktop: '', tablet: '834px', phone: '390px' };
+
+    function updatePreview() {
+      var src = state.page + '?' + queryString();
+      if (frame.getAttribute('src') !== src) frame.setAttribute('src', src);
+      frame.style.width = WIDTHS[state.width] || '100%';
+      urlOut.textContent = src;
+      openTab.setAttribute('href', src);
+    }
+
+    /* ---------------- the control rows ---------------- */
+
+    /* Each row is built from one definition, so adding a sky, a season or a
+       page in the app means adding it here and nowhere else. */
+    var ROWS = [
+      { host: 'pageBtns', options: PAGES, key: 'page' },
+      {
+        host: 'skyBtns',
+        options: [{ v: 'live', label: '\u25CF Live' }].concat(SKIES.map(function (s) { return { v: s, label: SKY_NAME[s] }; })),
+        key: 'sky'
+      },
+      {
+        host: 'partBtns',
+        options: [{ v: 'auto', label: 'By the sun' }].concat(PARTS.map(function (s) { return { v: s, label: PART_NAME[s] }; })),
+        key: 'part'
+      },
+      {
+        host: 'seasonBtns',
+        options: [{ v: 'auto', label: 'By date' }].concat(SEASONS.map(function (s) { return { v: s, label: SEASON_NAME[s] }; })),
+        key: 'season'
+      },
+      {
+        host: 'motionBtns',
+        options: [{ v: 'on', label: 'Moving' }, { v: 'off', label: 'Still' }],
+        key: 'motion'
+      },
+      {
+        host: 'focusBtns',
+        options: [{ v: 'page', label: 'Page up' }, { v: 'away', label: 'Faded away' }],
+        key: 'focus'
+      },
+      { host: 'dayBtns', options: WHEN, key: 'now' },
+      {
+        host: 'widthBtns',
+        options: [{ v: 'desktop', label: 'Desktop' }, { v: 'tablet', label: 'Tablet' }, { v: 'phone', label: 'Phone' }],
+        key: 'width'
+      }
+    ];
+
+    function buildRows() {
+      ROWS.forEach(function (row) {
+        var host = document.getElementById(row.host);
+        if (!host) return;
+        host.innerHTML = '';
+        row.options.forEach(function (opt) {
+          var b = el('button', 'chip-btn', opt.label);
+          b.type = 'button';
+          b.setAttribute('data-value', opt.v == null ? '' : opt.v);
+          b.setAttribute('aria-pressed', String(state[row.key] === opt.v));
+          b.addEventListener('click', function () {
+            state[row.key] = opt.v;
+            buildRows();
+            updatePreview();
+          });
+          host.appendChild(b);
+        });
+      });
+    }
+
+    /* ---------------- the grids ---------------- */
+
+    function weatherTiles() {
+      var host = document.getElementById('weatherGrid');
+      host.innerHTML = '';
+      SKIES.forEach(function (sky) {
+        ['day', 'night'].forEach(function (day) {
+          var fig = el('figure', 'tile');
+          fig.setAttribute('data-sky', sky);
+          fig.setAttribute('data-day', day);
+          fig.appendChild(el('div', 'tile-stage',
+            '<div class="tile-card">' +
+              '<span class="tile-title">A-Day \u00B7 3rd period</span>' +
+              '<span class="tile-sub">ends in 12 min</span>' +
+              '<span class="tile-meta">' +
+                '<i class="tile-accent"></i>' +
+                '<i class="tile-ab ab-a">A</i>' +
+                '<i class="tile-ab ab-b">B</i>' +
+              '</span>' +
+            '</div>'));
+          fig.appendChild(el('figcaption', null, SKY_NAME[sky] + ' \u00B7 ' + day));
+          host.appendChild(fig);
+        });
+      });
+    }
+
+    function lightTiles() {
+      var host = document.getElementById('lightGrid');
+      host.innerHTML = '';
+      SEASONS.forEach(function (season) {
+        PARTS.forEach(function (part) {
+          var fig = el('figure', 'tile');
+          fig.setAttribute('data-sky', 'cloud');
+          // Dusk and dawn still count as daylight in the app, so the palette
+          // only flips to night once the sun is fully down.
+          fig.setAttribute('data-day', part === 'night' ? 'night' : 'day');
+          fig.setAttribute('data-part', part);
+          // The faded-away look, which is where the photo is the star.
+          fig.setAttribute('data-focus', 'away');
+
+          var stage = el('div', 'tile-stage');
+          var photo = el('div', 'tile-photo');
+          photo.style.backgroundImage = 'url("' + season + '.png")';
+          stage.appendChild(photo);
+          fig.appendChild(stage);
+          fig.appendChild(el('figcaption', null, SEASON_NAME[season] + ' \u00B7 ' + PART_NAME[part]));
+          host.appendChild(fig);
+        });
+      });
+    }
+
+    /* ---------------- go ---------------- */
+
+    buildRows();
+    weatherTiles();
+    lightTiles();
+    updatePreview();
+
+    /* Handy from the devtools console. */
+    globalThis.DEV = {
+      state: state,
+      set: function (key, value) { state[key] = value; buildRows(); updatePreview(); }
+    };
+  })();
+  </script>
+
+</body>
+</html>

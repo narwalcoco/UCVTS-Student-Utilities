@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UCVTS Student Tools</title>
+  <meta name="description" content="The everyday tools for UCVTS students: your A-day/B-day reminder, and more on the way.">
+  <meta name="theme-color" content="#16295c" id="themeColor">
+  <link rel="icon" type="image/png" href="ucvts_logo.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- The same weather sky, the same school photo — the home page is the
+       class reminder page's sibling, not a different site. Reminders keep
+       working while you sit here. -->
+  <canvas id="skyFar" aria-hidden="true"></canvas>
+  <canvas id="skyNear" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scene-photo" id="scenePhoto" aria-hidden="true"></div>
+
+  <div class="page" id="page">
+
+    <!-- ============ background switch ============ -->
+    <div class="top-bar">
+      <button class="motion-btn" id="focusBtn" type="button"
+              title="Hide the page and show just the school in the weather">Hide the page</button>
+      <button class="motion-btn" id="motionBtn" type="button" aria-pressed="true">Motion: on</button>
+    </div>
+
+    <!-- ============ header ============ -->
+    <header class="hero">
+      <a class="hero-home" href="index.html" title="UCVTS Student Tools">
+        <span class="hero-logo" aria-hidden="true"><img src="ucvts_logo.png" alt="" decoding="async"></span>
+        <h1>UCVTS Student Tools</h1>
+      </a>
+    </header>
+
+    <!-- Today at a glance — the same verdict the reminder page's day card
+         leads with, driven by the same clock, and refreshed only when the
+         date changes. -->
+    <section class="card day-strip-card" aria-label="Today at a glance">
+      <div class="day-row">
+        <div class="day-badge" id="dayBadge">…</div>
+        <div class="day-copy">
+          <div class="day-title" id="dayTitle">Checking the calendar…</div>
+          <div class="day-sub" id="daySub">🧐</div>
+        </div>
+      </div>
+      <div class="day-strip-side">
+        <a class="day-cta" href="class-reminder.html">Open the class reminder →</a>
+        <p class="muted day-reminder-line" id="reminderLine">
+          <span class="pill" id="reminderPill">off</span>
+          <span id="reminderLineText">class reminders are standing by</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ the tools ============ -->
+    <section class="tiles" aria-label="Tools">
+
+      <a class="tile tool-a" href="class-reminder.html">
+        <span class="tile-icon" aria-hidden="true">🔔</span>
+        <span class="tile-copy">
+          <span class="tile-name">Class Reminder</span>
+          <span class="tile-blurb">A-day or B-day, your classes, and a heads-up before each one starts.</span>
+        </span>
+        <span class="tile-go" aria-hidden="true">→</span>
+      </a>
+
+      <a class="tile tool-b" href="focus-timer.html">
+        <span class="tile-icon" aria-hidden="true">🍅</span>
+        <span class="tile-copy">
+          <span class="tile-name">Focus Timer</span>
+          <span class="tile-blurb">Fifteen minutes on one thing, then five off. It keeps counting in the background, and a reload doesn't lose your place.</span>
+        </span>
+        <span class="tile-go" aria-hidden="true">→</span>
+      </a>
+
+      <a class="tile tool-c" href="calculator.html">
+        <span class="tile-icon" aria-hidden="true"><span class="tile-glyph">🖩</span></span>
+        <span class="tile-copy">
+          <span class="tile-name">Calculator</span>
+          <span class="tile-blurb">The TI-84 Plus CE from TestNav — the same calculator the state tests hand you, on any page.</span>
+        </span>
+        <span class="tile-go" aria-hidden="true">→</span>
+      </a>
+
+      <a class="tile tool-d" href="todo.html">
+        <span class="tile-icon" aria-hidden="true">📝</span>
+        <span class="tile-copy">
+          <span class="tile-name">To-do List</span>
+          <span class="tile-blurb">Folders for each class, tasks you can drag around, due dates, stars for what matters most. Saved on this device.</span>
+        </span>
+        <span class="tile-go" aria-hidden="true">→</span>
+      </a>
+
+      <!-- Straight out to Google Classroom: the "not turned in" view, which
+           is the one students actually want. Opens in a new tab so this page
+           is still here when they come back. -->
+      <a class="tile tool-e" href="https://classroom.google.com/a/not-turned-in/all" target="_blank" rel="noopener noreferrer">
+        <span class="tile-icon" aria-hidden="true">🏫</span>
+        <span class="tile-copy">
+          <span class="tile-name">Google Classroom</span>
+          <span class="tile-blurb">Jump straight to your not-turned-in work. Opens classroom.google.com in a new tab.</span>
+        </span>
+        <span class="tile-go" aria-hidden="true">↗</span>
+      </a>
+
+    </section>
+
+    <p class="home-footnote muted">
+      Everything is saved on this device only — there is no server and no account.
+      Reminders pop up on any page of this site while it's open in a tab. The
+      calculator's emulator loads from testnav.com, so that one page needs the
+      internet. Google Classroom is the one tile that leaves this site — it
+      opens in a new tab.
+    </p>
+
+  </div>
+
+  <!-- Reminder pop-ups — the same toasts the class reminder page shows. -->
+  <div class="toasts" id="toasts" aria-live="assertive"></div>
+
+  <!-- shown briefly when the page fades away, so it's clear how to get it back -->
+  <p class="scene-hint" id="sceneHint" aria-hidden="true">click anywhere to bring it back</p>
+
+  <script src="calendar.js"></script>
+  <script src="day.js"></script>
+  <script src="clock.js"></script>
+  <script src="sky.js"></script>
+  <script src="scene.js"></script>
+  <script src="reminders.js"></script>
+  <script src="home.js"></script>
+</body>
+</html>

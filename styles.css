@@ -1,0 +1,2234 @@
+/* ============================================================
+   UCVTS Class Pal — dark blue, soft & cute
+   ============================================================ */
+
+/* Base = the cloudy night sky. It doubles as the fallback, so the app looks
+   exactly like it always has if sky.js never runs at all. */
+:root {
+  --bg-top: #16295c;
+  --bg-bottom: #0a1533;
+  --sky-tint-1: rgba(108, 195, 255, 0.14);
+  --sky-tint-2: rgba(159, 178, 255, 0.12);
+
+  /* Scene: the school photo, how far down the page it sits, and how much the
+     page dims it while it is up. See the --scene-drop block further down. */
+  --scene-dim: 0.6;
+  --scene-drop: min(19.5vh, 14.6vw);
+  --photo-brightness: 1;
+  --photo-sat: 1;
+  --photo-warm: 0;
+
+  /* Deliberately translucent — the weather canvas lives behind these. */
+  --card: rgba(20, 38, 82, 0.82);
+  --card-soft: rgba(28, 52, 108, 0.86);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --card-blur: blur(12px);
+  --row-a: rgba(33, 64, 127, 0.72);
+  --row-b: rgba(20, 42, 88, 0.6);
+
+  /* The A-day / B-day identity pair, and their lighter gradient tops. Fixed
+     on purpose and never weather-tinted — the whole point is that the day
+     reads the same under any sky. Single source of truth for the schedule
+     banners, the rows and the A/B badges on the developer page. */
+  --day-a: #f2688a;
+  --day-a-lit: #ff9db0;
+  --day-b: #8fb8ff;
+  --day-b-lit: #cde4ff;
+
+  --text: #eef4ff;
+  --muted: #a8bce6;
+  --accent: #6cc3ff;
+  --accent-2: #9fb2ff;
+  --warm: #ffd27f;
+  --green: #8fe3b0;
+  --danger: #ff9db0;
+  --radius: 22px;
+  --shadow: 0 14px 34px rgba(2, 8, 28, 0.45);
+}
+
+/* ============================================================
+   Weather palettes
+   ------------------------------------------------------------
+   sky.js sets data-sky and data-day on <html>, so these only
+   ever swap the page atmosphere and the UI accent.
+
+   Note what is NOT here: the A-day / B-day colors. Those live in :root as
+   --day-a / --day-b and stay fixed on purpose — the day should read the
+   same under any sky, which is exactly what makes it trustworthy when the
+   background is moving.
+
+   These selectors are deliberately NOT prefixed with `html`, so
+   any element carrying the attribute pair picks up the palette.
+   That is what lets dev.html render a grid of every combination
+   out of the real stylesheet instead of a copy that would drift.
+   Nothing else in the app sets these attributes, so the scope
+   stays exactly as narrow as it needs to be.
+   ============================================================ */
+
+[data-sky="clear"][data-day="day"] {
+  /* A clear midday sky, not a navy one. The old pair was deep and saturated
+     enough to read as dusk at any hour; this keeps the blue but lifts it and
+     pulls the purple out, so it reads as daylight. */
+  --bg-top: #3f7ec9; --bg-bottom: #1b4b8c;
+  --accent: #ffd27f; --accent-2: #ffbc5c;
+  --sky-tint-1: rgba(255, 210, 127, 0.2);
+  --sky-tint-2: rgba(120, 190, 255, 0.14);
+}
+[data-sky="clear"][data-day="night"] {
+  --bg-top: #0d1b45; --bg-bottom: #050916;
+  --accent: #a8d8ff; --accent-2: #c8d8ff;
+  --sky-tint-1: rgba(168, 216, 255, 0.14);
+  --sky-tint-2: rgba(120, 150, 255, 0.1);
+}
+
+[data-sky="cloud"][data-day="day"] {
+  --bg-top: #35507d; --bg-bottom: #1a2a4a;
+  --accent: #a8c8ff; --accent-2: #c0d4ff;
+  --sky-tint-1: rgba(190, 215, 255, 0.14);
+  --sky-tint-2: rgba(108, 195, 255, 0.1);
+}
+[data-sky="cloud"][data-day="night"] {
+  --bg-top: #16295c; --bg-bottom: #0a1533;
+  --accent: #6cc3ff; --accent-2: #9fb2ff;
+  --sky-tint-1: rgba(108, 195, 255, 0.14);
+  --sky-tint-2: rgba(159, 178, 255, 0.12);
+}
+
+[data-sky="rain"][data-day="day"] {
+  --bg-top: #25455f; --bg-bottom: #0e2033;
+  --accent: #7fd4ff; --accent-2: #9fd0f0;
+  --sky-tint-1: rgba(127, 212, 255, 0.13);
+  --sky-tint-2: rgba(90, 150, 210, 0.12);
+}
+[data-sky="rain"][data-day="night"] {
+  --bg-top: #0c1c2e; --bg-bottom: #040a12;
+  --accent: #6fd8ff; --accent-2: #8fc8e8;
+  --sky-tint-1: rgba(111, 216, 255, 0.12);
+  --sky-tint-2: rgba(60, 110, 170, 0.12);
+}
+
+[data-sky="storm"][data-day="day"],
+[data-sky="storm"][data-day="night"] {
+  --bg-top: #342459; --bg-bottom: #0f0a24;
+  --accent: #ffd60a; --accent-2: #cbb6ff;
+  --sky-tint-1: rgba(255, 214, 10, 0.12);
+  --sky-tint-2: rgba(160, 120, 255, 0.14);
+}
+
+[data-sky="snow"][data-day="day"] {
+  --bg-top: #3d5d8c; --bg-bottom: #1b2f52;
+  --accent: #e2f1ff; --accent-2: #bcd8f5;
+  --sky-tint-1: rgba(226, 241, 255, 0.18);
+  --sky-tint-2: rgba(140, 180, 235, 0.14);
+}
+[data-sky="snow"][data-day="night"] {
+  --bg-top: #1b2f56; --bg-bottom: #070d1e;
+  --accent: #c9ecff; --accent-2: #a9c8ea;
+  --sky-tint-1: rgba(201, 236, 255, 0.14);
+  --sky-tint-2: rgba(90, 140, 210, 0.12);
+}
+
+[data-sky="fog"][data-day="day"] {
+  --bg-top: #3b4157; --bg-bottom: #1b1f2d;
+  --accent: #cfd4e6; --accent-2: #b8bdd0;
+  --sky-tint-1: rgba(207, 212, 230, 0.14);
+  --sky-tint-2: rgba(150, 160, 185, 0.12);
+}
+[data-sky="fog"][data-day="night"] {
+  --bg-top: #232635; --bg-bottom: #0b0d14;
+  --accent: #d8dcff; --accent-2: #b9bdd2;
+  --sky-tint-1: rgba(216, 220, 255, 0.12);
+  --sky-tint-2: rgba(140, 145, 170, 0.1);
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.45;
+}
+
+/* The atmosphere lives on its own fixed layer rather than on body itself.
+   iOS Safari ignores background-attachment: fixed, which would otherwise
+   leave the gradient sliding around behind everything while you scroll. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -5;
+  pointer-events: none;
+  background:
+    radial-gradient(1000px 500px at 85% -10%, var(--sky-tint-1), transparent 60%),
+    radial-gradient(900px 460px at -10% 20%, var(--sky-tint-2), transparent 60%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+}
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 26px 16px 60px;
+  transition: opacity 0.5s ease;
+}
+
+/* Nobody has touched it for a few minutes: get out of the way and let the
+   school and the weather have the whole screen. scene.js sets this, and
+   clears it the moment anyone does anything. */
+html[data-focus="away"] .page {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------
+   Light — how bright the school looks, by time of day.
+
+   sky.js sets data-part from the real sunrise and sunset for this
+   location, so this follows the actual year rather than a fixed hour:
+   in December the sun is already down by 4:33 PM, while in June it is
+   still up at 8:30 PM. Four sets of numbers to nudge later — a higher
+   brightness means a brighter school. --photo-warm adds a golden cast
+   through sepia, for the two windows where the light really is golden.
+   ------------------------------------------------------------ */
+
+[data-part="dawn"]  { --photo-brightness: 0.8;  --photo-sat: 1.05; --photo-warm: 0.18; }
+[data-part="dusk"]  { --photo-brightness: 0.68; --photo-sat: 1.08; --photo-warm: 0.24; }
+[data-part="night"] { --photo-brightness: 0.4;  --photo-sat: 0.7;  --photo-warm: 0; }
+
+/* Nothing on top of the scene: stop dimming it and let the school show. */
+[data-focus="away"] { --scene-dim: 0.1; }
+
+/* ============================================================
+   Scene stack
+   ------------------------------------------------------------
+   Painted back to front, so it stays easy to reason about:
+
+     -5  body::before    the weather gradient
+     -4  #skyFar         clouds, sun, stars, the lightning bolt
+     -3  .scene-photo    the school, cut out, for this season
+     -1  #skyNear        rain, snow, fog, the flash, ripples, drift
+     -1  .grain          a little texture over all of it
+         .page           the interface
+
+   The page's dim of the school used to be a `.scene-scrim` element sitting
+   between the photo and #skyNear, painting the sky gradient back over
+   everything. It dimmed the school, which was the point — but it is in
+   front of the photo, and the far sky had to move behind the photo for the
+   roof to cut across the clouds, so the same veil landed on the clouds and
+   the sun. A gold sun at full strength came out of it a cold blue-grey
+   (measured rgb(123,152,172), i.e. cooler than neutral, which is why it
+   stopped reading as a sun at all).
+
+   So the dim is now a filter on the photo itself. A filter only sees the
+   element's own pixels, so it dims the building and cannot reach anything
+   behind it — the veil is confined to the school by construction rather
+   than by masking the sky out of it.
+   ============================================================ */
+
+.scene-photo {
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  /* Pinned to the bottom edge rather than the middle, so the school sits low
+     in the scene and the sky it shares with the weather is above it. */
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  /* "contain" keeps every edge of the building visible whatever the window
+     shape. The cost: a tall phone gets a smaller school with more sky
+     around it, rather than a cropped close-up. */
+  background-size: contain;
+  /* How far down the page the school is set. See --scene-drop below. */
+  transform: translateY(var(--scene-drop));
+  opacity: 0;
+  /* Time of day, times how much the page is dimming the scene.
+
+     --photo-brightness is the light belonging to this hour; --scene-dim is
+     the veil the interface casts so the cards stay readable. They multiply,
+     so the light and the dim stay one decision instead of two that can
+     disagree — and the dim is expressed on the element that owns the photo,
+     which is what keeps it off the sky behind it.
+
+     A dim of 1 would be "no change", so the second term is inverted. 0.55 is
+     where the old veil landed once its blend was measured as light: it dims
+     the school without crushing it, and is the knob for that. */
+  filter: brightness(calc(var(--photo-brightness) * (1 - 0.55 * var(--scene-dim))))
+          saturate(var(--photo-sat)) sepia(var(--photo-warm));
+  transition: opacity 0.9s ease, filter 0.7s ease;
+}
+
+/* How far down the page the school sits. See --scene-drop in :root.
+
+   The cutouts are 4:3 and the building's baseline is at about 79% of the
+   image, so the bottom ~20% of every one of those files is simply empty —
+   measured on all four seasons, and the smallest of them is 20.2%. That is
+   room that exists to be spent: pushed down by that much, the school lands on
+   the bottom edge of the window without a single pixel cropped off it, which
+   lifts the roofline out of the upper band that sky.js keeps the clouds in.
+
+   min() rather than one number, because the drop is a share of the *photo's*
+   height, and the photo is drawn at whichever of two sizes is smaller: the
+   window's height on a wide screen, or the window's width times the photo's
+   own 0.75 ratio on a narrow one. Hence 19.5vh and its equivalent 14.6vw,
+   with the smaller one winning — which is precisely the size the photo is
+   drawn at. One expression covers every window shape, and there is no
+   breakpoint left to get wrong.
+
+   A @media (min-aspect-ratio: 4/3) block came first and was a trap: it fired
+   correctly on a wide window but left a portrait phone with the whole
+   transparent band showing as dead space under the school. */
+
+/* Only revealed once the image has actually decoded, so there is never a
+   half-drawn flash on a slow connection. */
+.scene-photo.loaded { opacity: 1; }
+
+/* Appears briefly when the page fades, so it is obvious how to get back. */
+.scene-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 45;
+  pointer-events: none;
+  margin: 0;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--text);
+  background: rgba(6, 12, 30, 0.62);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.scene-hint.on { opacity: 1; }
+
+/* ---------- weather sky (painted by sky.js, in two layers) ---------- */
+
+/* The weather is painted onto two canvases because the school sits between
+   them — and the school is a CSS background image, so there is no way to
+   sandwich a single canvas around it.
+
+   Both layers share this geometry and the same drawing transform, so a pass
+   can be moved from one to the other without a coordinate changing. */
+#skyFar,
+#skyNear {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* The far half — clouds, the sun, stars, the lightning bolt — belongs behind
+   the school. A cloud drifting across the facade is what makes a cut-out
+   building read as floating; cut off by the roof, it reads as distance. */
+#skyFar { z-index: -4; }
+
+/* The near half stays in front, where weather falling around you belongs:
+   rain and snow, the fog veil, the flash, and the ripples and drift that
+   gather along the bottom edge — which is now the foot of the building. */
+#skyNear {
+  z-index: -1;
+  opacity: 0.95;
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.7) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.motion-btn,
+.ghost-btn {
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.motion-btn:hover,
+.ghost-btn:hover { color: var(--text); border-color: var(--accent); }
+
+.motion-btn[aria-pressed="true"],
+.ghost-btn[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+
+/* today's weather — one panel in the day card's bottom row. Its metrics
+   match .fact so the two sit beside each other as one set of panels. */
+.sky-line {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 7px 12px;
+  border-radius: 11px;
+  background: rgba(10, 21, 51, 0.34);
+  border: 1px solid var(--card-border);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.sky-line[hidden] { display: none; }
+
+.sky-line .sky-emoji { font-size: 17px; line-height: 1; flex: 0 0 auto; }
+
+/* Empty until there is real artwork for the weather to sit in here. */
+.sky-line .sky-emoji:empty { display: none; }
+
+/* Orange when the sky is a sketch, green only when it's really live. */
+.sky-line .sky-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffb020;
+}
+
+html[data-live="live"] .sky-dot { background: #28c840; box-shadow: 0 0 0 3px rgba(40, 200, 64, 0.22); }
+html[data-live="preview"] .sky-dot { background: #b48cff; }
+html[data-live="fallback"] .sky-dot,
+html[data-live="loading"] .sky-dot { background: #ffb020; }
+
+/* ---------- header ---------- */
+
+/* The title header and the day-status card are narrower than the columns and
+   centered over them — a header band over a wider body. 1000px is the point
+   where the day card still holds one row on its busiest day (a holiday, which
+   carries the most facts), so it is the same height every day of the year and
+   never shifts as the facts change. */
+.hero,
+.day-card {
+  max-width: 1000px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px 10px 20px;
+}
+
+/* The school crest.
+
+   The logo is a single flat navy (#043067), which against this app's navy
+   backgrounds sits at roughly 1:1 contrast — it would simply disappear. So
+   it gets a light plate to sit on, which keeps the real brand colour
+   readable on all twelve weather palettes, and echoes the round A/B badges
+   used everywhere else. The source art is cropped tight to its edges, so
+   the whole visible ring here is this padding. */
+.hero-logo {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  padding: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 26%, #ffffff 0%, #e9effb 58%, #ccd8ee 100%);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.14), 0 8px 20px rgba(2, 8, 28, 0.38);
+  /* Its own bob: no rotation, because tilting a crest reads as a mistake
+     rather than as play. The motion stays, the tilt goes. */
+  animation: logo-bob 4s ease-in-out infinite;
+}
+
+.hero-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@keyframes logo-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+
+/* The title carries the header on its own now that the tagline is gone,
+   so it is sized to lead rather than to sit beside a subtitle. */
+h1 {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.3px;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.hero h1 { text-align: center; }
+
+/* ---------- cards ---------- */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+  margin: 0 0 18px;
+  /* Lets the sky show through on phones, where cards cover the whole screen. */
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+}
+
+.card h2 {
+  margin: 0 0 6px;
+  font-size: 19px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.head-tools { display: flex; align-items: center; gap: 10px; }
+
+.muted { color: var(--muted); font-size: 14px; margin: 6px 0 12px; }
+.muted b { color: var(--text); font-weight: 600; }
+.small { font-size: 12.5px; }
+code { background: rgba(255, 255, 255, 0.12); padding: 1px 6px; border-radius: 6px; font-size: 0.9em; }
+
+/* ---------- day status card ---------- */
+
+/* ---------- two-column layout ---------- */
+
+/* Columns size to their content and the pair stays centered; together they may
+   be wider than the header above (different side margins than the title items). */
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  align-items: start;
+}
+
+/* Both columns hold a width they were designed for instead of stretching to
+   whatever the window happens to be: 526px at their narrowest, 560px at their
+   widest. Equal basis, equal floor, equal ceiling, so they are always the same
+   width as each other — side by side or stacked.
+
+   526px is the schedule's natural width, and it is the floor because a
+   narrower table would only scroll. 560px is the ceiling because past that
+   the short copy in the right column does not fill the card, and it turns into
+   a wide, thin band. Between the pair's floors they wrap into one centered
+   stack instead of each getting squeezed. min() keeps the floor off the bottom
+   of a phone. */
+.col-left,
+.col-right {
+  flex: 1 1 526px;
+  min-width: min(526px, 100%);
+  max-width: 560px;
+}
+
+/* ---------- day status card ---------- */
+
+.day-card {
+  background: linear-gradient(135deg, rgba(35, 64, 127, 0.78) 0%, rgba(26, 47, 102, 0.72) 100%);
+  /* .card later resets margins to 0; re-assert centering here. */
+  margin-left: auto;
+  margin-right: auto;
+  /* One row while there is room for one: whose day it is on the left, the
+     day's facts and the weather on the right. Both groups keep their natural
+     width and the row wraps to two when the card runs out of room — the same
+     content-driven rule the fact row already uses, so no breakpoint has to
+     guess. Stacked it is exactly the card it was before. */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 22px;
+}
+
+.day-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.day-badge {
+  /* One knob for the whole badge, so the letter and the emoji can't drift
+     apart at different breakpoints.
+
+     They deliberately use different ratios of it. A text glyph's cap-height
+     is only ~70% of its font-size, while a colour emoji fills its em box
+     almost entirely — so matching the numbers made the emoji render about a
+     third larger than the A/B letter. That is why a school day looked right
+     and a day off looked shouty. 0.52 keeps the letter exactly the size it
+     has always been; the emoji gets its own, smaller ratio below. */
+  --badge: 84px;
+  flex: 0 0 auto;
+  width: var(--badge);
+  height: var(--badge);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--badge) * 0.52);
+  line-height: 1;
+  font-weight: 800;
+  color: #0b1636;
+  background: radial-gradient(circle at 32% 28%, #ffe9b0, var(--warm) 55%, #f0b95e);
+  box-shadow: 0 0 0 5px rgba(255, 210, 127, 0.18), 0 10px 24px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.day-badge.typeB {
+  background: radial-gradient(circle at 32% 28%, #cde4ff, #8fb8ff 55%, #6b93e8);
+  box-shadow: 0 0 0 5px rgba(143, 184, 255, 0.2), 0 10px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* No school. This used to be a bright pink disc — loud, and it meant
+   nothing: the emoji already says which kind of day off it is. Now it is a
+   quiet glassy one that lets the weather through, so the only saturated
+   thing left in this card is the A/B letter, which actually earns it.
+
+   The emoji is an aside rather than a verdict, so it sits a little under the
+   letter's visual weight, and the disc is flatter — no raised-button shadow
+   competing with the A/B medallion that appears on school days. */
+.day-badge.off {
+  font-size: calc(var(--badge) * 0.38);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 12px rgba(2, 8, 28, 0.2);
+}
+
+/* Three tiers, identical in every state: the verdict, the date, the facts. */
+.day-title {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  color: #ffffff;
+  text-wrap: balance;
+}
+
+.day-sub { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
+
+/* Facts and weather share one row. Both keep their natural width and the
+   row wraps instead of squeezing — so the weather drops to its own line
+   when the card gets narrow. No media query, so it follows the real width
+   of the card rather than the width of the window. */
+.day-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 7px;
+  /* Spacing comes from the card's row gap now, so this group can sit beside
+     the day title instead of always underneath it. */
+  margin-top: 0;
+  min-width: 0;
+}
+
+/* Facts are separate panels rather than one run-on line, so "day #11 of 182"
+   and "dismissal 12:24 PM" read as two things instead of one sentence.
+   margin:0 is load-bearing — <dl> carries a default 1em that would otherwise
+   pad the row and stretch the weather panel with it. */
+.day-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0;
+}
+
+.day-facts:empty,
+.day-facts[hidden] { display: none; }
+
+.day-facts .fact {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 7px 12px;
+  border-radius: 11px;
+  background: rgba(10, 21, 51, 0.34);
+  border: 1px solid var(--card-border);
+}
+
+.day-facts dt {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+.day-facts dd {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ---------- schedule table ---------- */
+
+.table-wrap { overflow-x: auto; }
+
+table.sched {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 7px;
+  min-width: 480px;
+}
+
+.sched th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  font-weight: 700;
+  padding: 2px 12px 0;
+}
+
+.sched td { padding: 0; vertical-align: middle; }
+
+/* ---- A/B day identity ------------------------------------------------
+   One attribute drives the banner, the row tint and the "today" outline,
+   so those three can never disagree. --day-* come from :root. */
+.sched [data-day="A"] {
+  --day-ink: var(--day-a);
+  --day-tint: rgba(242, 104, 138, 0.2);
+  --day-line: rgba(242, 104, 138, 0.45);
+}
+
+.sched [data-day="B"] {
+  --day-ink: var(--day-b);
+  --day-tint: rgba(143, 184, 255, 0.2);
+  --day-line: rgba(143, 184, 255, 0.45);
+}
+
+.sched .group td { padding: 9px 0 0; }
+
+.g-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 13px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.05);
+  transition: background 0.25s ease, border-color 0.25s ease, opacity 0.25s ease;
+}
+
+.g-name {
+  font-weight: 800;
+  font-size: 13.5px;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.g-tag { display: none; }
+
+/* Today's day owns the schedule — tinted banner, coloured outline and a
+   TODAY tag — while the other day steps back, so the two can't be mistaken
+   for each other. On a day off neither is "today" and both stay neutral. */
+.sched .group.isToday .g-bar {
+  background: var(--day-tint);
+  border-color: var(--day-line);
+}
+
+.sched .group.isToday .g-name { color: var(--day-ink); }
+
+.sched .group.isToday .g-tag {
+  display: inline-block;
+  margin-left: auto;
+  background: var(--day-ink);
+  color: #0b1636;
+}
+
+.sched.hasToday .group.isOther .g-bar { background: none; opacity: 0.5; }
+
+.sched tr.rowA td { background: var(--row-a); }
+.sched tr.rowB td { background: var(--row-b); }
+
+.sched tr.row td {
+  padding: 8px 12px;
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+.sched tr.row td:first-child { border-radius: 16px 0 0 16px; }
+.sched tr.row td:last-child { border-radius: 0 16px 16px 0; }
+
+/* A school day: the active group goes solid, the inactive one is ghosted. */
+.sched.hasToday tr.rowToday td { background: var(--day-tint); }
+.sched.hasToday tr.row:not(.rowToday) td { background: rgba(255, 255, 255, 0.03); }
+.sched.hasToday tr.row:not(.rowToday) .period-name { color: var(--muted); }
+
+.sched tr.rowToday td { box-shadow: inset 0 0 0 1.5px var(--day-line); }
+.sched tr.rowToday td:first-child {
+  box-shadow: inset 3px 0 0 0 var(--day-ink), inset 0 0 0 1.5px var(--day-line);
+}
+
+/* Period label cell. The per-row A/B bubble is gone: the day banner above
+   each group says it once, and repeating it eight times was just noise. */
+.period-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 132px;
+}
+
+.period-name { font-weight: 700; font-size: 15px; white-space: nowrap; }
+.period-time { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+
+/* Course / room inputs */
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 21, 51, 0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 6px 10px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.field:focus-within {
+  border-color: var(--accent);
+  background: rgba(10, 21, 51, 0.6);
+}
+
+.field .f-emoji { font-size: 16px; filter: saturate(0.9); }
+
+.field input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14.5px;
+  width: 100%;
+  min-width: 60px;
+}
+
+.field input::placeholder { color: rgba(168, 188, 230, 0.55); }
+
+/* ---- read mode vs edit mode ------------------------------------------
+   Both the value and its input live in the DOM at all times; the mode is a
+   single class on the table. Switching therefore rebuilds nothing, so a
+   half-typed row can't be lost and focus can't be dropped. Read mode is the
+   default — a schedule that's filled in should read like a timetable, not
+   like a form. */
+.cell { display: flex; align-items: center; min-width: 0; }
+
+.sched .field { display: none; }
+
+.cell-view {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 3px 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  color: var(--text);
+  text-align: left;
+  cursor: text;
+}
+
+.cell-view:hover { color: var(--accent); }
+.cell-view:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.cell-view[data-empty] {
+  font-size: 13.5px;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--muted);
+  opacity: 0.72;
+}
+
+/* Room and course carry the same weight. The room used to be smaller and
+   muted, which made a real fact look like a half-filled field. Only the
+   tracking differs now, so it still reads as an identifier rather than a
+   word. */
+.sched td:last-child .cell-view { letter-spacing: 0.4px; }
+
+.sched.editing .cell-view { display: none; }
+.sched.editing .field { display: flex; }
+
+.save-hint {
+  font-size: 12px;
+  color: var(--green);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.save-hint.flash { opacity: 1; }
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12.5px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 2px 0;
+  margin-top: 10px;
+}
+
+.link-btn:hover { color: var(--danger); }
+
+/* ---------- today's classes ---------- */
+
+.classes-card { display: none; }
+.classes-card.visible { display: block; }
+
+.class-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(10, 21, 51, 0.35);
+  margin-bottom: 8px;
+}
+
+.class-line .when { flex: 0 0 auto; width: 118px; font-size: 12.5px; color: var(--muted); }
+
+.class-line .what { flex: 1 1 auto; min-width: 0; }
+.class-line .what .c-name { font-weight: 700; font-size: 15px; }
+.class-line .what .c-room { font-size: 12.5px; color: var(--muted); }
+.class-line .what .c-free { color: var(--muted); font-size: 13.5px; font-style: italic; }
+
+.badge {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.badge.on {
+  background: rgba(143, 227, 176, 0.16);
+  color: var(--green);
+  border: 1px solid rgba(143, 227, 176, 0.45);
+  animation: glow 1.6s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(143, 227, 176, 0.0); }
+  50%      { box-shadow: 0 0 12px 0 rgba(143, 227, 176, 0.45); }
+}
+
+.badge.next { background: rgba(108, 195, 255, 0.14); color: var(--accent); border: 1px solid rgba(108, 195, 255, 0.4); }
+
+.note {
+  background: rgba(255, 210, 127, 0.1);
+  border: 1px dashed rgba(255, 210, 127, 0.5);
+  color: var(--warm);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  margin-bottom: 10px;
+}
+
+/* ---------- reminders ---------- */
+
+.pill {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(168, 188, 230, 0.15);
+  color: var(--muted);
+}
+
+.pill.on { background: rgba(143, 227, 176, 0.18); color: var(--green); }
+
+/* Once notifications are granted the card has nothing left to operate, so it
+   collapses to the pill, one line and the heads-up list. The lead and the
+   button return on their own if permission is off or blocked — which is the
+   only time they're worth the room. */
+.remind-card .remind-compact { display: none; }
+.remind-card.is-on .remind-lead,
+.remind-card.is-on .reminder-controls { display: none; }
+.remind-card.is-on .remind-compact { display: block; }
+
+.reminder-controls { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+
+.btn {
+  font: inherit;
+  font-weight: 800;
+  font-size: 15px;
+  color: #0b1636;
+  background: linear-gradient(180deg, #ffe9b0, #ffcf7d);
+  border: none;
+  border-radius: 999px;
+  padding: 10px 20px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(255, 210, 127, 0.25);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(255, 210, 127, 0.35); }
+.btn:active { transform: translateY(1px); }
+
+.btn.is-on {
+  background: linear-gradient(180deg, #b9f0cd, #8fe3b0);
+  color: #0a2a17;
+  box-shadow: 0 6px 16px rgba(143, 227, 176, 0.25);
+}
+
+.tip { font-size: 12.5px; color: var(--muted); }
+.tip.warn { color: var(--warm); }
+
+.reminder-list { margin-top: 14px; }
+
+.r-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(10, 21, 51, 0.35);
+  margin-bottom: 7px;
+  font-size: 13.5px;
+}
+
+.r-line .r-time { font-weight: 800; color: var(--accent); flex: 0 0 auto; width: 92px; }
+.r-line .r-msg { color: var(--text); flex: 1 1 auto; }
+.r-line .r-lead { flex: 0 0 auto; color: var(--muted); font-size: 11.5px; }
+
+/* ---------- simulated-time banner ---------- */
+
+.sim-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: linear-gradient(90deg, #4a2b8f, #3553a8 60%, #1e5f8f);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 14px;
+  margin: 0 0 16px;
+  padding: 9px 14px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+}
+
+.sim-banner[hidden] { display: none; }
+
+.banner-x {
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffe9b0;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 233, 176, 0.4);
+  border-radius: 999px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.banner-x:hover { background: rgba(0, 0, 0, 0.4); }
+
+/* ---------- modules ----------
+   Two hosts, because a module has to be able to say how much room it wants.
+   'column' sits inside the right-hand column under the reminders, so the
+   schedule keeps the space it needs and a module never pushes it around.
+   'wide' spans the page below both columns, for whatever genuinely needs
+   the room. Nothing on this page uses it right now.
+
+   Both hosts are built the same way — a wrapping flex row — so one, two or
+   five modules lay out sensibly and nothing here assumes it is the only
+   module on the page. */
+
+.modules {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  align-items: start;
+}
+
+/* display:flex outranks the user agent's [hidden] rule, so say it again —
+   otherwise an unused host would still take up its share of the layout. */
+.modules[hidden] { display: none; }
+
+/* In the column it is a stack that fills the width, not a centred row. */
+.modules-column {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.module-card { margin: 0; }
+
+/* In the column: take the column. Wide: most of the page, never the edges. */
+.modules-column .module-card { flex: 1 1 auto; max-width: none; }
+.modules:not(.modules-column) .module-card { flex: 1 1 600px; max-width: 900px; }
+
+.module-explainer { color: var(--muted); font-size: 14px; margin: 6px 0 14px; }
+.module-explainer b { color: var(--text); font-weight: 700; }
+
+/* ---------- module: focus timer ----------
+   The light climbs as the session does, on the same warm ramp the sky uses.
+   It stays inside this card on purpose: the real sky is a weather report, and
+   a progress bar wearing it would make the background lie. */
+
+.pomo { display: flex; flex-direction: column; gap: 13px; }
+
+.pomo-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+
+.pomo-time {
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pomo-state {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pomo[data-mode="work"] .pomo-state { color: var(--warm); }
+.pomo[data-mode="break"] .pomo-state { color: var(--accent); }
+
+.pomo-track { height: 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.09); overflow: hidden; }
+
+.pomo-fill {
+  width: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff9a3c, #ffd27f 65%, #ffe9b0);
+  box-shadow: 0 0 16px rgba(255, 210, 127, 0.5);
+  /* One second, matching the once-a-second repaint, so the bar glides
+     continuously instead of stepping. */
+  transition: width 1s linear;
+}
+
+.pomo[data-mode="break"] .pomo-fill {
+  background: linear-gradient(90deg, #58b8f0, #9fe0ff 70%, #cdefff);
+  box-shadow: 0 0 16px rgba(127, 212, 255, 0.45);
+}
+
+.pomo-note { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+.pomo-actions { display: flex; align-items: center; gap: 10px; }
+.pomo-actions .btn { flex: 1 1 auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pomo-fill { transition: none; }
+}
+
+/* ---------- beta tester panel ---------- */
+
+.sim-panel {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 60;
+  width: min(360px, calc(100vw - 32px));
+  background: linear-gradient(170deg, #2b3f86 0%, #1c3068 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 20px;
+  box-shadow: 0 18px 44px rgba(2, 8, 28, 0.6);
+  padding: 14px 16px;
+  font-size: 13px;
+}
+
+.sim-panel[hidden] { display: none; }
+
+.sim-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sim-head strong { font-size: 15px; }
+
+.sim-lead { color: var(--muted); font-size: 12.5px; margin: 6px 0 10px; }
+
+.sim-cur {
+  background: rgba(10, 21, 51, 0.45);
+  border: 1px solid rgba(255, 210, 127, 0.25);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--warm);
+  margin-bottom: 2px;
+}
+
+.sim-section {
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  font-size: 10.5px;
+  color: var(--muted);
+  font-weight: 800;
+  margin: 11px 0 6px;
+}
+
+.sim-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.chip-btn {
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 5px 11px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.chip-btn:hover { background: rgba(108, 195, 255, 0.2); border-color: var(--accent); }
+.chip-btn[aria-pressed="true"] {
+  background: rgba(108, 195, 255, 0.3);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.sim-jump { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.sim-jump input {
+  background: rgba(10, 21, 51, 0.5);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 7px 9px;
+  font: inherit;
+  font-size: 13px;
+  color-scheme: dark;
+}
+
+.sim-jump input:focus { outline: none; border-color: var(--accent); }
+
+.btn.small { padding: 8px 14px; font-size: 13px; }
+
+.sim-hint { font-size: 11.5px; color: var(--muted); margin: 9px 0 2px; min-height: 13px; }
+
+.sim-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 4px; }
+.sim-foot .link-btn { margin-top: 0; font-size: 11.5px; text-align: left; }
+
+.sim-dev { margin: 10px 0 0; font-size: 11.5px; }
+.sim-dev a { color: var(--accent); text-decoration: none; font-weight: 700; }
+.sim-dev a:hover { text-decoration: underline; }
+
+/* ---------- toast pop-ups ---------- */
+
+.toasts {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  left: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: linear-gradient(135deg, #2b4a92, #1f3a79);
+  border: 1px solid rgba(108, 195, 255, 0.45);
+  border-radius: 18px;
+  box-shadow: 0 14px 34px rgba(2, 8, 28, 0.55);
+  padding: 13px 16px;
+  max-width: 420px;
+  animation: toast-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.toast.bye { animation: toast-out 0.4s ease forwards; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toast-out {
+  to { opacity: 0; transform: translateY(14px) scale(0.96); }
+}
+
+.toast .t-emoji { font-size: 26px; line-height: 1.15; }
+.toast .t-title { font-weight: 800; font-size: 15px; }
+.toast .t-body { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.toast .t-x {
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 560px) {
+  .page { padding: 16px 10px 40px; }
+  h1 { font-size: 28px; }
+  .hero-logo { width: 52px; height: 52px; padding: 7px; }
+  /* Just the one value — the letter and the emoji both follow it. */
+  .day-badge { --badge: 68px; }
+  .day-title { font-size: 18px; }
+  .class-line .when { width: 92px; font-size: 11.5px; }
+  .toast { max-width: 100%; }
+  .motion-btn { padding: 5px 11px; font-size: 11px; }
+}
+
+/* ---------- motion ---------- */
+
+/* Colour fades only once the first palette has landed, so the initial
+   switch from the fallback look isn't a slow dissolve on every load. */
+html[data-ready] body { transition: color 0.5s ease; }
+html[data-ready] .card { transition: background-color 0.5s ease, border-color 0.5s ease; }
+
+/* ============================================================
+   Home / landing page
+   ------------------------------------------------------------
+   Styled from the same tokens as the class reminder page — same cards,
+   same badges, same pills — so the two pages read as one site. The one
+   new shapes are the tile row and the day strip's side column; everything
+   else is the reminder page's own classes doing a second job.
+   ============================================================ */
+
+/* The day strip: the reminder page's day card, minus the facts row. The
+   verdict on the left; the link into the tool and the one-line reminder
+   state on the right. */
+.day-strip-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 22px;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+  background: linear-gradient(135deg, rgba(35, 64, 127, 0.78) 0%, rgba(26, 47, 102, 0.72) 100%);
+}
+
+.day-strip-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.day-cta {
+  display: inline-block;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0b1636;
+  background: linear-gradient(180deg, #ffe9b0, #ffcf7d);
+  border-radius: 999px;
+  padding: 9px 18px;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(255, 210, 127, 0.25);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.day-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(255, 210, 127, 0.35); }
+.day-cta:active { transform: translateY(1px); }
+
+.day-reminder-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12.5px;
+}
+
+/* The tiles: the tools. An <a> row that reads as a card, at the same scale
+   the reminder page uses for its own rows. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 18px 16px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+
+a.tile { transition: transform 0.15s ease, border-color 0.15s ease; }
+
+a.tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+a.tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* The reminder page's badge discipline: the one saturated thing on a tile
+   is its icon, so the tool reads at a glance — same trick the A/B letter
+   uses. */
+.tile-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  font-size: 26px;
+  background: rgba(10, 21, 51, 0.45);
+  border: 1px solid var(--card-border);
+}
+
+.tool-a .tile-icon {
+  background: radial-gradient(circle at 32% 28%, #ffe9b0, var(--warm) 55%, #f0b95e);
+  border: none;
+  box-shadow: 0 0 0 4px rgba(255, 210, 127, 0.16);
+}
+
+/* The calculator's glyph is a thin monochrome symbol, so it reads smaller
+   than the emoji beside it at the same size — made bigger, and lifted a few
+   pixels so it sits optically centred with the emoji beside it. */
+.tool-c .tile-icon { font-size: 36px; }
+.tool-c .tile-glyph { display: inline-block; transform: translateY(-4px); }
+
+.tile-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.tile-name {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  color: var(--text);
+}
+
+.tile-blurb {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.tile-go {
+  position: absolute;
+  right: 16px;
+  bottom: 14px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
+  opacity: 0.65;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+a.tile:hover .tile-go { opacity: 1; transform: translateX(2px); }
+
+/* A tile with nothing behind it yet says so, quietly, in the same visual
+   language the reminder card uses for states: a pill. */
+.tile-soon { opacity: 0.72; }
+
+.tile-soon-tag {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(168, 188, 230, 0.15);
+  color: var(--muted);
+}
+
+.home-footnote {
+  max-width: 1000px;
+  margin: 14px auto 0;
+  font-size: 12.5px;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .day-strip-side { align-items: stretch; }
+  .day-cta { text-align: center; }
+}
+
+/* ============================================================
+   The tool pages: focus timer & calculator
+   ------------------------------------------------------------
+   Both pages are scaffolds around a thing that styles itself —
+   a module card the shelf builds, and a calculator whose chrome
+   belongs to the emulator. The shared pieces: the hero crest and
+   title are one link home on every page, and the tool pages that
+   need one get a centred lead paragraph the landing and the
+   reminder page don't need (their content explains itself at a
+   glance).
+   ============================================================ */
+
+/* ---------- the way home ----------
+   The crest and the title are one link. Hover speaks on the crest's
+   shadow rather than its transform, because the bob animation already
+   owns transform — a hover lift there would fight it every frame. */
+
+.hero-home {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 16px;
+}
+
+.hero-home:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.hero-home .hero-logo { transition: box-shadow 0.15s ease; }
+
+a.hero-home:hover .hero-logo {
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.14),
+    0 0 0 7px rgba(108, 195, 255, 0.28),
+    0 8px 20px rgba(2, 8, 28, 0.38);
+}
+
+.hero-home h1 { transition: text-shadow 0.15s ease; }
+
+a.hero-home:hover h1 { text-shadow: 0 2px 14px rgba(108, 195, 255, 0.45); }
+
+/* ---------- shared page scaffolding ---------- */
+
+.page-lead {
+  max-width: 1000px;
+  margin: 0 auto 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.page-foot {
+  max-width: 1000px;
+  margin: 16px auto 0;
+  text-align: center;
+  font-size: 12.5px;
+}
+
+/* ---------- the focus timer page ----------
+   The page carries the same two module hosts the class reminder page
+   does, so the shelf's slot lookup works unchanged; .stage just centres
+   the column host and gives the instrument room to breathe. The timer
+   itself is the same card, same keys, same state as over there. */
+
+.stage { display: flex; justify-content: center; }
+
+.stage .modules-column { width: min(560px, 100%); }
+
+/* On a page of its own it's an instrument, not a sidebar widget: the
+   same three knobs the module card already has, turned up. */
+.stage .pomo-time { font-size: 56px; }
+.stage .pomo-track { height: 14px; }
+.stage .pomo-note { font-size: 13.5px; }
+
+@media (max-width: 560px) {
+  .stage .pomo-time { font-size: 46px; }
+}
+
+/* ---------- the calculator page ----------
+   tn.css (the emulator's own stylesheet) sets body { padding: 0 !important;
+   display: flex !important } — a page shape for a bare calculator. The
+   class on <body> says this site's shape again after it, so the hero and
+   the page keep their layout around the emulator.
+
+   It also carries Bootstrap-era defaults that land on this page only,
+   because it loads after styles.css: body { color: #333 } and
+   h1 { color: inherit } turn the hero title dark grey on the night sky —
+   the one page whose title isn't white. Both are restated here at a
+   specificity tn.css can't outrank (body.ti84 / .ti84 h1 both beat its
+   plain body / h1 no matter the order), and the title's own numbers are
+   restated with it, since tn.css's h1 rules also win the margin, size,
+   weight and line-height the other pages give theirs. */
+
+body.ti84 {
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column;
+  color: var(--text);
+  font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+
+.ti84 h1 {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #ffffff;
+}
+
+/* The site's own mobile size — .ti84 h1 outranks the plain h1 the
+   560px block targets, so the shrink has to be said again here. */
+@media (max-width: 560px) {
+  .ti84 h1 { font-size: 28px; }
+}
+
+.ti84 #calculatorDiv { margin-left: auto; margin-right: auto; }
+
+/* The card *is* the calculator, with a 10px breathing ring around it:
+   no max-width of its own, and sized by fit-content so it takes exactly
+   the width the emulator gives #calculatorDiv plus that padding and not
+   a pixel more. overflow: hidden clips the emulator's square corners to
+   the card's radius. While the emulator loads, #calculatorDiv is empty
+   and the card collapses to nothing — then the error paragraph (if there
+   is one) gives it its width back. */
+.calc-card {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 18px;
+  padding: 10px;
+  overflow: hidden;
+}
+
+/* The one state the page can end in that isn't a calculator: the emulator's
+   three megabytes didn't arrive. Said in the same voice as every other
+   failure on this site — plain, specific, and with the fix. */
+.calc-error {
+  /* The card's 10px padding gives it its sides; only the gap under the
+     calculator is its own. */
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 157, 176, 0.12);
+  border: 1px solid rgba(255, 157, 176, 0.35);
+  color: var(--danger);
+  font-size: 13.5px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ============================================================
+   The to-do list page
+   ------------------------------------------------------------
+   Folders are the site's cards at a smaller scale; tasks are the
+   reminder page's rows, made draggable. Everything that only
+   matters on hover (the folder menu, the star) is invisible until
+   the pointer is on it, so a full board still reads calmly.
+   ============================================================ */
+
+.todo-wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.todo-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.todo-hint {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.todo-hint span { color: var(--text); font-weight: 700; }
+
+/* ---------- the board & folders ---------- */
+
+.todo-board {
+  position: relative;   /* the drag insertion line anchors to this box */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  align-items: start;
+  gap: 18px;
+}
+
+.todo-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 34px 22px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--card);
+  border: 1px dashed var(--card-border);
+  border-radius: var(--radius);
+}
+
+.todo-folder {
+  position: relative;
+  padding: 16px 16px 54px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+  transition: border-color 0.15s ease;
+}
+
+.todo-folder-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.todo-folder-grip {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  padding: 2px 2px;
+  border-radius: 6px;
+}
+
+.todo-folder-grip:active { cursor: grabbing; }
+
+.todo-folder-name {
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  overflow-wrap: anywhere;
+}
+
+.todo-folder-count {
+  flex: 0 0 auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 7px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--accent);
+  background: rgba(108, 195, 255, 0.14);
+  border: 1px solid rgba(108, 195, 255, 0.4);
+  border-radius: 999px;
+}
+
+.todo-folder-count:empty { display: none; }
+
+/* The three-dot menu only shows while the pointer is on its folder. */
+.todo-folder-menu {
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  padding: 2px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.todo-folder:hover .todo-folder-menu,
+.todo-folder-menu:focus-visible { opacity: 1; }
+
+.todo-folder-menu:hover { color: var(--text); background: rgba(255, 255, 255, 0.08); }
+
+.todo-folder-pop {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 5;
+  min-width: 130px;
+  margin-top: 4px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--card-soft);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+}
+
+.todo-folder-pop[hidden] { display: none; }
+
+.todo-pop-btn {
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.todo-pop-btn:hover { background: rgba(255, 255, 255, 0.09); }
+
+.ctx-danger { color: var(--danger); }
+
+/* ---------- tasks ---------- */
+
+.todo-tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 8px;
+}
+
+.todo-tasks[hidden] { display: none; }
+
+.todo-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 9px 10px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid transparent;
+  cursor: grab;
+  transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+}
+
+.todo-task:hover { background: rgba(255, 255, 255, 0.075); }
+.todo-task:active { cursor: grabbing; }
+
+.todo-check {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.todo-check:hover { border-color: var(--green); }
+
+.todo-task.is-done .todo-check {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.todo-task.is-done .todo-check::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 6px;
+  height: 11px;
+  border: solid #0a2a17;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.todo-task-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.todo-task-name {
+  font-size: 14.5px;
+  color: var(--text);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.todo-task.is-done .todo-task-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* The due line sits under the task name and is the one red thing here. */
+.todo-task-due {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--danger);
+  letter-spacing: 0.1px;
+}
+
+.todo-task.is-done .todo-task-due { opacity: 0.6; }
+
+.todo-task-subject {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* A sliver of space at the right that reveals a star on hover. */
+.todo-star {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  margin-top: -1px;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--accent);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.12s ease;
+}
+
+.todo-task:hover .todo-star,
+.todo-star:focus-visible,
+.todo-star.is-on { opacity: 1; }
+
+.todo-star:hover { transform: scale(1.15); }
+
+.todo-star.is-on { color: var(--warm); }
+
+/* The add button owns the folder's bottom-right corner. */
+.todo-add-task {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  font: inherit;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  color: #0b1636;
+  background: linear-gradient(180deg, #ffe9b0, #ffcf7d);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(255, 210, 127, 0.25);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.todo-add-task:hover { transform: translateY(-1px) scale(1.05); box-shadow: 0 8px 20px rgba(255, 210, 127, 0.4); }
+.todo-add-task:active { transform: translateY(1px); }
+
+/* ---------- the completed-tasks fold ----------
+   The finished tasks sit under a divider at the bottom of the folder, out
+   of the way until asked for. */
+
+.todo-done {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--card-border);
+}
+
+.todo-done-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  padding: 4px 2px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.todo-done-toggle:hover { color: var(--text); }
+
+.todo-done-caret { font-size: 11px; width: 10px; text-align: center; }
+
+.todo-done-count {
+  margin-left: auto;
+  min-width: 18px;
+  padding: 0 6px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.todo-tasks-done { margin-top: 8px; }
+
+/* A finished task is a record, not a draggable thing. */
+.todo-tasks-done .todo-task { background: rgba(255, 255, 255, 0.03); cursor: default; }
+
+/* ---------- drag feedback ----------
+   While a folder is in the air every folder folds to its header, and a
+   vertical bar marks the gap it will land in. */
+
+.todo-board.is-folder-dragging .todo-folder { padding-bottom: 16px; }
+
+.todo-board.is-folder-dragging .todo-tasks,
+.todo-board.is-folder-dragging .todo-add-task,
+.todo-board.is-folder-dragging .todo-done { display: none; }
+
+.todo-folder.is-dragging { opacity: 0.45; }
+
+.todo-drop-line {
+  position: absolute;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(108, 195, 255, 0.85);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+  z-index: 3;
+}
+
+.todo-drop-line.on { opacity: 1; }
+
+.todo-task.is-drop-before { box-shadow: 0 -2px 0 0 var(--accent); }
+
+/* ============================================================
+   Lightboxes & the right-click menu
+   ------------------------------------------------------------
+   Only the to-do page uses these so far, but they are written
+   generically: any page that drops in a .modal gets the same
+   centred card on the same dimmed backdrop.
+   ============================================================ */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.modal[hidden] { display: none; }
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 10, 28, 0.62);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.modal-card {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 22px;
+  background: var(--card-soft);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  animation: modal-in 0.16s ease;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.modal-title {
+  margin: 0 0 16px;
+  font-size: 19px;
+}
+
+/* Scoped under .modal on purpose: the schedule table already owns a bare
+   `.field`, and an unscoped rule here would reach into it and stack its
+   inputs vertically. */
+.modal .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.field-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.modal .field-row .field { flex: 1 1 150px; min-width: 0; }
+
+.modal .field[hidden] { display: none; }
+
+.field-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.field-opt {
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+.modal .field input,
+.modal .field select {
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.modal .field input:focus,
+.modal .field select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(108, 195, 255, 0.22);
+}
+
+.modal .field select option { background: #16295c; color: var(--text); }
+
+.field-error {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.field-error[hidden] { display: none; }
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+body.modal-open { overflow: hidden; }
+
+/* ---------- the right-click menu ---------- */
+
+.ctx-menu {
+  position: fixed;
+  z-index: 70;
+  min-width: 150px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--card-soft);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  backdrop-filter: var(--card-blur);
+  -webkit-backdrop-filter: var(--card-blur);
+}
+
+.ctx-menu[hidden] { display: none; }
+
+.ctx-menu button {
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.ctx-menu button:hover { background: rgba(255, 255, 255, 0.09); }
+
+@media (max-width: 560px) {
+  .todo-board { grid-template-columns: 1fr; }
+  .todo-folder-menu { opacity: 1; }
+  .todo-star { opacity: 1; }
+}
+
+/* The operating system setting always wins for anything animated. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* The Motion button, for anyone who wants it calm without changing a
+   system setting. sky.js stops painting, not just animating. */
+html[data-motion="off"] *,
+html[data-motion="off"] *::before,
+html[data-motion="off"] *::after {
+  animation: none !important;
+  transition: none !important;
+}

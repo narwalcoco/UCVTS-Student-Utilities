@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Class Reminder · UCVTS Student Tools</title>
+  <meta name="description" content="A cute A-day / B-day class reminder for UCVTS students.">
+  <meta name="theme-color" content="#16295c" id="themeColor">
+  <link rel="icon" type="image/png" href="ucvts_logo.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- weather sky, painted by sky.js in two passes: the far one sits behind
+       the school (clouds, sun, stars, lightning), the near one in front of it
+       (rain, snow, fog, the flash) -->
+  <canvas id="skyFar" aria-hidden="true"></canvas>
+  <canvas id="skyNear" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- the school, cut out so the weather shows through around it. The dim the
+       page casts over it is a filter on this element, not a layer over the
+       scene — see the scene stack notes in styles.css. -->
+  <div class="scene-photo" id="scenePhoto" aria-hidden="true"></div>
+
+  <div class="page" id="page">
+
+    <!-- simulated-time banner — appears only while the beta tester clock is active -->
+    <div class="sim-banner" id="simBanner" hidden>
+      <span id="simBannerText">🧪 Testing simulated time</span>
+      <button class="banner-x" id="simExitBtn" type="button">Exit test mode ✕</button>
+    </div>
+
+    <!-- ============ background switch ============ -->
+    <div class="top-bar">
+      <button class="motion-btn" id="focusBtn" type="button"
+              title="Hide the page and show just the school in the weather">Hide the page</button>
+      <button class="motion-btn" id="motionBtn" type="button" aria-pressed="true">Motion: on</button>
+    </div>
+
+    <!-- ============ header ============ -->
+    <!-- The crest and the title are the way home; every page of the site
+         gets the same one. -->
+    <header class="hero">
+      <a class="hero-home" href="index.html" title="Back to UCVTS Student Tools">
+        <span class="hero-logo" aria-hidden="true"><img src="ucvts_logo.png" alt="" decoding="async"></span>
+        <h1>UCVTS Class Reminder</h1>
+      </a>
+    </header>
+
+    <!-- ============ today's status ============ -->
+    <section class="card day-card" aria-live="polite">
+      <div class="day-row">
+        <div class="day-badge" id="dayBadge">…</div>
+        <div class="day-copy">
+          <div class="day-title" id="dayTitle">Checking the calendar…</div>
+          <div class="day-sub" id="daySub">🧐</div>
+        </div>
+      </div>
+
+      <!-- facts and weather on one row; they stack on their own when the
+           card runs out of width -->
+      <div class="day-meta">
+        <dl class="day-facts" id="dayFacts"></dl>
+        <p class="sky-line" id="skyLine">
+          <span class="sky-dot" aria-hidden="true"></span>
+          <span class="sky-emoji" id="skyLineEmoji" aria-hidden="true"></span>
+          <span id="skyLineText">reading the sky…</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ two-column layout: schedule | classes + reminders ============ -->
+    <div class="columns">
+
+      <!-- left column: schedule table -->
+      <div class="col col-left">
+        <section class="card schedule-card">
+          <div class="card-head">
+            <h2>My classes ✏️</h2>
+            <div class="head-tools">
+              <span class="save-hint" id="saveHint">saved 💾</span>
+              <button class="ghost-btn" id="editBtn" type="button" aria-pressed="false">Edit</button>
+            </div>
+          </div>
+          <p class="muted" id="schedLead">Saved on this device. Press Edit to change anything.</p>
+          <div class="table-wrap">
+            <table class="sched" id="schedTable">
+              <thead>
+                <tr>
+                  <th class="col-periods">Period</th>
+                  <th>Course</th>
+                  <th>Room</th>
+                </tr>
+              </thead>
+              <tbody id="schedBody"></tbody>
+            </table>
+          </div>
+          <button id="resetBtn" class="link-btn" type="button">Clear all schedule data</button>
+        </section>
+      </div>
+
+      <!-- right column: today's classes + reminders -->
+      <div class="col col-right">
+        <section class="card classes-card" id="classesCard">
+          <h2>Today 🗓️</h2>
+          <div id="classList"></div>
+        </section>
+
+        <section class="card remind-card" id="remindCard">
+          <div class="card-head">
+            <h2>Reminders 🔔</h2>
+            <span class="pill" id="reminderPill">off</span>
+          </div>
+          <p class="muted remind-lead">
+            Get a friendly heads‑up <b>10 minutes</b> and <b>5 minutes</b> before each
+            class starts (and when the last class of the day is almost over). Keep this tab open —
+            reminders pop up on screen (and as system notifications if you allow them).
+          </p>
+          <!-- shown instead of the lead + button once notifications are granted,
+               which is the only state where there is nothing left to operate -->
+          <p class="muted remind-compact">
+            Heads‑up <b>10</b> and <b>5 minutes</b> before each class. Keep this tab open —
+            you’ll also get system notifications.
+          </p>
+          <div class="reminder-controls">
+            <button id="enableBtn" class="btn" type="button">Turn on reminders 💌</button>
+            <span class="tip" id="notifTip"></span>
+          </div>
+          <div id="todayReminders"></div>
+        </section>
+
+        <!-- modules that are content to be narrow: they stack here, under the
+             reminders, beside the schedule — which is the main feature and
+             never moves for them. Built by modules.js. -->
+        <div class="modules modules-column" id="modulesCol" hidden></div>
+      </div>
+
+    </div>
+
+    <!-- Modules that need the whole width. A module says which host it wants;
+         both hosts take themselves out of the layout when nothing is in them.
+         Nothing uses this host right now — the shelf keeps it, ready. -->
+    <section class="modules" id="modules" aria-label="Modules" hidden></section>
+
+  </div>
+
+  <!-- beta tester: simulated time — open it by typing betatesternico anywhere -->
+  <aside class="sim-panel" id="simPanel" hidden aria-label="Simulated time tester">
+    <div class="sim-head">
+      <strong>🧪 Beta Tester</strong>
+      <button class="t-x" id="simPanelClose" type="button" aria-label="Close panel">✕</button>
+    </div>
+    <p class="sim-lead">Simulate a moment so you can test reminders and the A/B calendar. Your device clock is never touched.</p>
+    <div class="sim-cur" id="simCur"></div>
+
+    <div class="sim-section">Presets</div>
+    <div class="sim-chips">
+      <button class="chip-btn" type="button" data-preset="first10">A-Day · 1st class starts in 10m (7:50)</button>
+      <button class="chip-btn" type="button" data-preset="first5">A-Day · 1st class starts in 5m (7:55)</button>
+      <button class="chip-btn" type="button" data-preset="next10">A-Day · next class (3–4) in 10m (9:17)</button>
+      <button class="chip-btn" type="button" data-preset="lunch10">A-Day · lunch in 10m (10:43)</button>
+      <button class="chip-btn" type="button" data-preset="last10">A-Day · last class ends in 10m (2:40)</button>
+      <button class="chip-btn" type="button" data-preset="last5">A-Day · last class ends in 5m (2:45)</button>
+      <button class="chip-btn" type="button" data-preset="closed">No-school day · noon</button>
+      <button class="chip-btn" type="button" data-preset="early">Half day · 11:00 AM</button>
+    </div>
+
+    <div class="sim-section">Jump to any date &amp; time</div>
+    <div class="sim-jump">
+      <input type="date" id="simDate" aria-label="Date">
+      <input type="time" id="simTime" aria-label="Time">
+      <button class="btn small" id="simGoBtn" type="button">Go ⏱️</button>
+    </div>
+
+    <div class="sim-section">Nudge</div>
+    <div class="sim-chips">
+      <button class="chip-btn" type="button" data-step="1">+1m</button>
+      <button class="chip-btn" type="button" data-step="5">+5m</button>
+      <button class="chip-btn" type="button" data-step="60">+1h</button>
+      <button class="chip-btn" type="button" data-step="1440">+1d</button>
+    </div>
+
+    <div class="sim-section">Background sky</div>
+    <div class="sim-chips" id="skyPresets"></div>
+    <p class="sim-hint" id="skyNote">Following live weather.</p>
+
+    <div class="sim-section">Time of day</div>
+    <div class="sim-chips" id="partPresets"></div>
+
+    <div class="sim-section">School photo</div>
+    <div class="sim-chips" id="scenePresets"></div>
+    <p class="sim-hint" id="sceneNote">Following the season.</p>
+
+    <p class="sim-hint" id="simHint"></p>
+    <p class="sim-dev"><a href="dev.html">Open the developer page &rarr;</a> — every sky, season and hour at once</p>
+    <div class="sim-foot">
+      <button class="link-btn" id="simResetBtn" type="button">Return to the real clock</button>
+      <button class="link-btn" id="simRefireBtn" type="button">Allow reminders to fire again</button>
+    </div>
+  </aside>
+
+  <!-- reminder pop-ups (fallback when system notifications aren't available) -->
+  <div class="toasts" id="toasts" aria-live="assertive"></div>
+
+  <!-- shown briefly when the page fades away, so it's clear how to get it back -->
+  <p class="scene-hint" id="sceneHint" aria-hidden="true">click anywhere to bring it back</p>
+
+  <script src="calendar.js"></script>
+  <script src="day.js"></script>
+  <script src="clock.js"></script>
+  <script src="sky.js"></script>
+  <script src="scene.js"></script>
+  <script src="reminders.js"></script>
+  <script src="app.js"></script>
+
+  <!-- The module shelf. The focus timer lives on its own page
+       (focus-timer.html); this page loads the shelf but registers no module,
+       so the column host below stays empty. A future module drops in as one
+       file and one <script> tag. -->
+  <script src="modules.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# Scratch verification harnesses. These are written and thrown away while
+# testing in a browser; verify-calendar.js is the one that is kept, because it
+# runs headless under node and is worth keeping green.
+_probe.html
+_init.js
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calculator · UCVTS Student Tools</title>
+  <meta name="description" content="A TI-84 Plus CE — the same emulator TestNav serves for the state tests — on a UCVTS Student Tools page.">
+  <meta name="theme-color" content="#16295c" id="themeColor">
+  <link rel="icon" type="image/png" href="ucvts_logo.png">
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- The emulator's own stylesheet, from the same place the emulator comes
+       from. It sets body { padding: 0 !important; display: flex !important };
+       styles.css says this site's body shape again with the class on <body>
+       so the site keeps its shape around it. -->
+  <link rel="stylesheet" href="https://mn.testnav.com/client/public/stylesheets/tn.css">
+  <style>
+    /* The calculator draws into this box; its chrome is its own. */
+    #calculatorDiv { outline: none !important; margin: 0 auto; }
+  </style>
+</head>
+<body class="ti84">
+
+  <!-- The same weather sky and school photo as everywhere else on the site;
+       reminders keep firing while you sit here, too. -->
+  <canvas id="skyFar" aria-hidden="true"></canvas>
+  <canvas id="skyNear" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scene-photo" id="scenePhoto" aria-hidden="true"></div>
+
+  <div class="page" id="page">
+
+    <!-- ============ background switch ============ -->
+    <div class="top-bar">
+      <button class="motion-btn" id="focusBtn" type="button"
+              title="Hide the page and show just the school in the weather">Hide the page</button>
+      <button class="motion-btn" id="motionBtn" type="button" aria-pressed="true">Motion: on</button>
+    </div>
+
+    <!-- ============ header ============ -->
+    <header class="hero">
+      <a class="hero-home" href="index.html" title="Back to UCVTS Student Tools">
+        <span class="hero-logo" aria-hidden="true"><img src="ucvts_logo.png" alt="" decoding="async"></span>
+        <h1>Calculator</h1>
+      </a>
+    </header>
+
+    <!-- The emulator mounts itself into #calculatorDiv and sizes the box
+         itself; calculator-page.js boots it and speaks if it can't. The
+         card hugs the calculator exactly — no padding, no lead-in prose. -->
+    <section class="card calc-card" aria-label="TI-84 Plus CE calculator">
+      <div id="calculatorDiv"></div>
+      <p class="calc-error" id="calcError" hidden></p>
+    </section>
+
+  </div>
+
+  <!-- Reminder pop-ups — the engine fires on every page of the site. -->
+  <div class="toasts" id="toasts" aria-live="assertive"></div>
+
+  <!-- shown briefly when the page fades away, so it's clear how to get it back -->
+  <p class="scene-hint" id="sceneHint" aria-hidden="true">click anywhere to bring it back</p>
+
+  <script src="calendar.js"></script>
+  <script src="day.js"></script>
+  <script src="clock.js"></script>
+  <script src="sky.js"></script>
+  <script src="scene.js"></script>
+  <script src="reminders.js"></script>
+
+  <!-- The emulator, then the two data files it reads through the XHR proxy
+       in calculator-page.js. The data tags stay empty: pointing them at
+       data-url keeps us from shipping a 1.8 MB ROM in this repo, and lets a
+       future build inline them instead without changing a line of code. -->
+  <script src="https://mn.testnav.com/client/texasinstruments/js/ELG-min.js"></script>
+  <script id="h84statej" type="application/json" data-url="https://mn.testnav.com/client/texasinstruments/bin/No_AppsCE.h84statej"></script>
+  <script id="ti84faceplate" type="application/json" data-url="https://mn.testnav.com/client/texasinstruments/images/TI84CE_touch.svg"></script>
+  <script src="calculator-page.js"></script>
+</body>
+</html>

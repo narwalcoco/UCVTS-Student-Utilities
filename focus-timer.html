@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Focus Timer · UCVTS Student Tools</title>
+  <meta name="description" content="Fifteen minutes on one thing, then five off — the focus timer, on a page of its own.">
+  <meta name="theme-color" content="#16295c" id="themeColor">
+  <link rel="icon" type="image/png" href="ucvts_logo.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- The same weather sky and school photo as everywhere else on the site;
+       reminders keep firing while you sit here, too. -->
+  <canvas id="skyFar" aria-hidden="true"></canvas>
+  <canvas id="skyNear" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scene-photo" id="scenePhoto" aria-hidden="true"></div>
+
+  <div class="page" id="page">
+
+    <!-- ============ background switch ============ -->
+    <div class="top-bar">
+      <button class="motion-btn" id="focusBtn" type="button"
+              title="Hide the page and show just the school in the weather">Hide the page</button>
+      <button class="motion-btn" id="motionBtn" type="button" aria-pressed="true">Motion: on</button>
+    </div>
+
+    <!-- ============ header ============ -->
+    <header class="hero">
+      <a class="hero-home" href="index.html" title="Back to UCVTS Student Tools">
+        <span class="hero-logo" aria-hidden="true"><img src="ucvts_logo.png" alt="" decoding="async"></span>
+        <h1>Focus Timer</h1>
+      </a>
+    </header>
+
+    <p class="page-lead">
+      Fifteen minutes on one thing, then five off. It keeps counting while this
+      tab is in the background, and it remembers where it was — the deadline is
+      saved, so a reload doesn't lose your place.
+    </p>
+
+    <!-- The module shelf, the same one modules.js builds on any page. The
+         timer is not rebuilt here: modules.js mounts the very same card from
+         the very same settings and data keys, so it is one and the same timer.
+         Each host unhides itself when something is in it, and takes itself out
+         of the layout when nothing is. -->
+    <div class="stage">
+      <div class="modules modules-column" id="modulesCol" aria-label="Focus timer" hidden></div>
+    </div>
+    <section class="modules" id="modules" aria-label="Modules" hidden></section>
+
+    <p class="page-foot muted">
+      The timer keeps counting while this tab is in the background, and a reload
+      doesn't lose your place. Everything is saved on this device only.
+    </p>
+
+  </div>
+
+  <!-- Reminder pop-ups — the engine fires on every page of the site. -->
+  <div class="toasts" id="toasts" aria-live="assertive"></div>
+
+  <!-- shown briefly when the page fades away, so it's clear how to get it back -->
+  <p class="scene-hint" id="sceneHint" aria-hidden="true">click anywhere to bring it back</p>
+
+  <script src="calendar.js"></script>
+  <script src="day.js"></script>
+  <script src="clock.js"></script>
+  <script src="sky.js"></script>
+  <script src="scene.js"></script>
+  <script src="reminders.js"></script>
+
+  <!-- The module shelf first, then one file per module — the same two tags
+       the class reminder page ends with. No page glue of its own: the
+       markup above is the page, and the module mounts itself. -->
+  <script src="modules.js"></script>
+  <script src="module-pomodoro.js"></script>
+</body>
+</html>
