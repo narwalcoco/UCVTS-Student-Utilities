@@ -45,6 +45,7 @@ different origin, and permission belongs to the origin.
 | `focus-timer.html` | the focus timer on a page of its own: the same module shelf carrying the one module, nothing else |
 | `calculator.html` | a TI‑84 Plus CE: the real emulator Texas Instruments ships for TestNav, booted into the site theme |
 | `todo.html` | the to-do list maker: a folder per class, drag-to-reorder tasks, due dates and stars, saved on the device |
+| `planner.html` | the schedule planner: your tasks on a month/week/day calendar, with a recommended day to do each one worked out from your classes, their A/B day, and the hours you have |
 
 They are deliberately siblings — same stylesheet, same sky, same clock, same
 photo. The landing page is not a thinner copy of the reminder page; it is the
@@ -61,8 +62,13 @@ wherever you are.
 | `class-reminder.html` | the class reminder page |
 | `focus-timer.html` | the focus timer page: the module shelf with the one module, and no glue of its own |
 | `calculator.html` | the TI‑84 Plus CE page (the emulator itself is fetched from testnav.com at runtime) |
-| `todo.html` | the to-do list maker: folders, tasks, lightboxes, the right-click menu |
-| `todo.js` | to-do list glue: the saved list, drag-and-drop reorder (folders by their grip, in any row, with a vertical insertion line), the folded completed-tasks section, the lightboxes and the context menu |
+| `todo.html` | the to-do list maker: folders, tasks, and the right-click menu (the task lightbox is built by `taskmodal.js`) |
+| `todo.js` | to-do list glue: drag-and-drop reorder (folders by their grip, in any row, with a vertical insertion line), the folded completed-tasks section, the folder lightbox and the context menu |
+| `planner.html` | the schedule planner: the toolbar, the calendar host, and the settings lightbox |
+| `planner.js` | planner glue: the month/week/day calendar, the settings menu (hours and keywords), and the wiring — it draws what `plan.js` decides |
+| `plan.js` | **when to do the homework**. Pure logic, no DOM: keyword estimates, 45-minute sittings, A/B class days, and the day-by-day plan — which prefers work a day before the deadline. Runs in Node so it can be tested |
+| `todostore.js` | the saved to-do list in one place: the loader, the saver, folder/task helpers and the shared due-line format. Both the to-do page and the planner read and write through it |
+| `taskmodal.js` | the task lightbox, shared by both pages, so a task made on the planner is the same task the to-do page makes |
 | `calculator-page.js` | boots the TI‑84: the XHR proxy, the data-URL wiring, and the plain-language failure if the emulator can't load |
 | `home.js` | landing-page glue: the day strip and the reminder pill |
 | `styles.css` | all styling, including every weather palette |
@@ -77,6 +83,7 @@ wherever you are.
 | `module-pomodoro.js` | the focus timer |
 | `verify-calendar.js` | smoke test for `calendar.js` — `node verify-calendar.js` |
 | `verify-site.js` | smoke test for `day.js` and `reminders.js` — `node verify-site.js` |
+| `verify-planner.js` | smoke test for `plan.js` — `node verify-planner.js` |
 | `dev.html` | developer page: every sky, season and hour side by side |
 | `*.png` | the four seasonal school photos plus the crest |
 
@@ -104,8 +111,13 @@ the module file. The markup carries the same two module hosts the class
 reminder page does, so the shelf's slot lookup finds home there unchanged.
 `calculator.html` is the shared stack plus the emulator's script, two data
 tags and `calculator-page.js` — it needs no page glue beyond that boot file.
-`todo.html` is the shared stack plus one glue file, `todo.js` — it still loads
-`reminders.js` on purpose, so the reminder pop-ups keep firing while you plan.
+`todo.html` is the shared stack plus `todostore.js`, `taskmodal.js` and one
+glue file, `todo.js` — it still loads `reminders.js` on purpose, so the
+reminder pop-ups keep firing while you plan. `planner.html` is that same stack
+plus `todostore.js`, `taskmodal.js`, the pure `plan.js` and `planner.js`. The
+to-do page and the planner share the list and the task lightbox on purpose:
+there is one loader, one saver and one idea of what a task is, so a task added
+on either page turns up on both.
 
 ## How the site stays one site
 
@@ -175,7 +187,10 @@ to write its own "and once at startup" call. `app.js` uses `minute` for the
 things that genuinely change minute to minute (the countdown and the reminder
 preview); the reminder engine uses it for the firing check; `home.js` uses it
 for nothing beyond its first render — the day strip only changes with the
-date, and its writes are diffed anyway. Nothing else runs.
+date, and its writes are diffed anyway. The planner subscribes to `day` and
+`time` alone: its plan is rebuilt when the date changes or a test clock is
+re-pointed, and is otherwise untouched — nothing about it changes minute to
+minute. Nothing else runs.
 
 The weather animation is deliberately **not** part of this. The sky really does
 have to redraw continuously, and that's a different kind of job — and only
@@ -312,13 +327,15 @@ flip side is that a different browser looks fresh.
 | `ucvts.sky.v1` | a pinned sky, if the user chose one instead of following the weather |
 | `ucvts.season.v1` | a pinned season photo, if the user chose one |
 | `ucvts.motion.v1` | whether background motion is on |
-| `ucvts.todo.v1` | the to-do list: folders, and each folder's tasks with their due date, subject, star and done state |
+| `ucvts.todo.v1` | the to-do list: folders, and each folder's tasks with their due date, subject, star and done state — **read and written by both the to-do page and the planner** |
+| `ucvts.planner.v1` | the planner's settings: whether it has been set up, the hours available for homework each weekday, the keyword → minutes table, and the default time per task |
 
 ## Testing
 
 ```bash
 node verify-calendar.js      # 42 assertions about the school year
 node verify-site.js          # 21 assertions about the shared day summary and the reminder engine
+node verify-planner.js       # 41 assertions about the keyword estimates and the recommended plan
 ```
 
 There's no browser test runner. Verification in this project is done by

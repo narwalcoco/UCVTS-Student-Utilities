@@ -66,46 +66,8 @@
   <!-- Reminder pop-ups — the engine fires on every page of the site. -->
   <div class="toasts" id="toasts" aria-live="assertive"></div>
 
-  <!-- ---------- the task lightbox ---------- -->
-  <div class="modal" id="taskModal" hidden>
-    <div class="modal-backdrop" data-close="taskModal"></div>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
-      <h2 class="modal-title" id="taskModalTitle">New task</h2>
-
-      <label class="field">
-        <span class="field-label">Task</span>
-        <input type="text" id="taskName" maxlength="140" placeholder="What needs doing?" autocomplete="off">
-      </label>
-
-      <div class="field-row">
-        <label class="field">
-          <span class="field-label">Due date <span class="field-opt">optional</span></span>
-          <input type="date" id="taskDue">
-        </label>
-        <label class="field">
-          <span class="field-label">Due time <span class="field-opt">optional</span></span>
-          <input type="time" id="taskTime">
-        </label>
-      </div>
-
-      <label class="field">
-        <span class="field-label">Subject</span>
-        <select id="taskSubject"></select>
-      </label>
-
-      <label class="field" id="taskOtherField" hidden>
-        <span class="field-label">Class or club name</span>
-        <input type="text" id="taskOther" maxlength="80" placeholder="e.g. Robotics Club" autocomplete="off">
-      </label>
-
-      <p class="field-error" id="taskError" hidden></p>
-
-      <div class="modal-actions">
-        <button type="button" class="ghost-btn" data-close="taskModal">Cancel</button>
-        <button type="button" class="btn" id="taskSaveBtn">Save task</button>
-      </div>
-    </div>
-  </div>
+  <!-- The task lightbox is built by taskmodal.js — the same screen the
+       schedule planner opens, so the two pages cannot drift apart. -->
 
   <!-- ---------- the folder lightbox (new & rename share it) ---------- -->
   <div class="modal" id="folderModal" hidden>
@@ -142,6 +104,8 @@
   <script src="sky.js"></script>
   <script src="scene.js"></script>
   <script src="reminders.js"></script>
+  <script src="todostore.js"></script>
+  <script src="taskmodal.js"></script>
   <script src="todo.js"></script>
 </body>
 </html>

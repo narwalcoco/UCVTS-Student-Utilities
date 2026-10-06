@@ -44,7 +44,12 @@ page, and the module-settings panel (and its button) was removed. A further
 pass finally fixed folder dragging in the **lower rows** of the to-do board —
 the drag-time collapse was reflowing the grid out from under the pointer and
 Chromium was cancelling the drag — and this time it was reproduced and verified
-in a real headless browser.
+in a real headless browser. Most recently: the **schedule planner** — your
+to-do list on a month/week/day calendar, with a recommended day (or days) to do
+each piece of work worked out from the class it's for, whether that class meets
+on an A-day or a B-day, the deadline, the hours you have each day, and keywords
+like "study" and "worksheet" — and the task lightbox shared between it and the
+to-do page so one list has one editor.
 
 **Next:** the soroban trainer page, then the reminder list and the emoji.
 
@@ -1283,6 +1288,134 @@ line is present and `on`, and every bit of drag state is cleared after the drop.
 **Verified:** `node --check` clean on every JS file; the developer page's inline
 script checked; 42/42 calendar checks; 21/21 site checks; styles.css braces
 balanced (360/360); plus the headless-browser drag results above.
+
+### 2026-10-05 — the schedule planner, and one task shared by two pages
+
+**The ask:** a planner page that, on first visit, prompts for how many hours
+are available for homework each day of the week (and can be re-opened from a
+button); then shows a calendar with a month, week and day view, each showing
+the tasks due in that frame; and **auto-calculates when assignments are
+recommended to be done** from the class a task is due for, when it's due,
+whether that class meets on an A-day or a B-day, and the time available each
+day — using keywords to size a task (study = 1hr, worksheet = 20min, packet =
+30min) and spreading long ones (projects, essays, study) across several days.
+Everything saved in `localStorage`.
+
+**Where the tasks come from — the decision that shaped the rest.** The answer
+was explicit: read the planner's tasks from the **to-do list**, and let tasks
+added on the planner show back up there — and when adding from the planner, use
+**the same screen the to-do page uses**. That rules out a second, parallel task
+store. It also means the to-do list can no longer own its data and its task
+lightbox privately, because the planner would then need its own copies and the
+two would drift — precisely the failure mode this file keeps coming back to.
+
+**So two pieces were pulled out of `todo.js` into their own files.**
+`todostore.js` is the list itself: one loader, one saver, one session state
+object, folder/task helpers, and the shared due-line format. `taskmodal.js` is
+the task lightbox — it builds its own DOM (so there is no markup to keep in
+step between two HTML files) and saves through the store. `todo.js` now
+delegates to both: `openTaskModal` became a three-line call into
+`U.taskModal.open`, and its storage helpers and course-name/due-line logic are
+imported instead of copied. The planner opens `U.taskModal.open` with a
+`resolveFolder(subject)` callback, so a task entered there is filed in the
+folder named after its subject (created on first use; a blank subject goes to a
+folder called "Other") — which is how it appears on the to-do page without the
+planner owning any folders of its own. The drag-and-drop reorder code in
+`todo.js` was deliberately left untouched.
+
+**The scheduling lives in `plan.js`, pure logic like `calendar.js`.** It reads
+the same schedule the reminder page writes (`ucvts.classpal.schedule.v1`) so
+"the class meets that day" means the same A/B day everywhere. The rules:
+
+- **Estimate** — the highest-paying keyword found in the task's name or subject
+  wins (ties go to the longer word, the more specific one); no match pays a
+  configurable default (30 min).
+- **Sittings** — the total is cut into pieces of at most **45 minutes**, as even
+  as they go: `study` (60) is two 30s; `project` (120) is three 40s; a 20-minute
+  worksheet is one 20. A task flagged **spread** (project, essay, study, test…)
+  is placed one sitting per day across several days; everything else is one go.
+- **Which day** — candidates run from today to the deadline, but the day
+  *before* the deadline is the last day we want to use: anything after it is a
+  heavy penalty, so work is preferred a day early and the deadline itself is
+  only a fallback. Within that, a day the class meets scores highest; a spread
+  task leans early (start it soon) and a one-off leans late (do it close to
+  when it's due). Each sitting comes out of that day's free minutes (the
+  configured hours, shared across every task), one sitting per task per day,
+  and nothing is ever recommended after the deadline. An overdue task is worked
+  out from today.
+- Spread tasks get a window of roughly three days per sitting, so they don't
+  all pile onto the last night.
+
+The measured behaviour matches the ask: an A-level task lands on a day the
+class actually meets and says so ("you have Algebra 2 that day"); nothing is
+scheduled past its due date; no day is handed more minutes than its hours;a day with no hours at all produces no sittings, but the deadlines still show.
+
+**The config menu** is a table with the seven days as columns and a single row
+of hours — exactly as asked — plus an editable keyword table (word, minutes,
+spread) and a default-minutes field. It opens itself on the first visit
+(nothing saved yet) and re-opens from **Configure**. Settings live in
+`ucvts.planner.v1`; the tasks themselves stay in `ucvts.todo.v1`.
+
+**The page** (`planner.js`) draws three views over one plan: a month grid of day
+cells (A/B badge, due chips, a recommended-minutes line), a seven-column week,
+and a single day split into what's due and what's recommended. Clicking a day
+opens it; the toolbar navigates by month, week or day. It subscribes only to the
+clock's `day` and `time` events, so it replans when the date changes (or a test
+clock is re-pointed) and does nothing in between — no polling, same as every
+other page.
+
+**Verified.** `node verify-planner.js` asserts 41 things about the pure logic
+(estimates, sitting sizes, A/B class days, the plan, capacity, overdue, empty
+config). A headless-Chromium run (Playwright, same sysroot setup as the drag
+fix) then drove the real page through **37** checks: the config menu auto-opens
+on first visit and saves; with a seeded schedule and tasks the month draws, the
+due chips land on the right days and recommended work lands on a B-day class day;
+week and day views render and a day cell opens; **Add a task** opens the shared
+lightbox, saves into `ucvts.todo.v1` under the right folder, and shows on both
+the planner and the to-do page; a task with no subject lands in "Other"; the
+Configure button re-opens, a keyword row can be added, edited, saved and reset;
+and no page threw a console error. The to-do page's folder drag was re-run
+through the earlier harness — all five cases still reorder — and the landing
+tile and the developer page's picker both show the new page. Static checks:
+`node --check` clean on every file (including the developer page's inline
+script), 42/42 calendar, 21/21 site, 41/41 planner, styles.css braces balanced
+(now 466/466).
+
+**Honest notes.** The plan is recomputed from scratch on each render rather
+than cached, which is fine at homework scale (a few dozen tasks) and keeps the
+logic in one place; if the list ever grew large, the pure `buildPlan` is the
+single place to memoize. And the keyword matching is a plain substring test, so
+"contested" would match "test" — the table is editable precisely so a student
+can tune it if that ever bites.
+
+---
+
+### 2026-10-05 — the plan prefers to be done a day early
+
+**The ask:** the recommended schedule should prefer assignments being done a
+day ahead of time, rather than on the deadline.
+
+**One rule, in one place.** `plan.js` already treated the deadline as a mild
+penalty ("plan B"), but a day that genuinely fit the class could still beat it —
+a Friday deadline in a Friday class would keep the work on the Friday. Now the
+day *before* the deadline is the last day we want, and anything past it is a
+penalty heavy enough that any earlier day with room wins, however good the
+deadline day's class fit is. The deadline stays a candidate, so when every
+earlier day is full (or has no hours) the work still lands there rather than
+nowhere; overdue tasks are untouched because they run from today. Spread windows
+now lead up to the day before the deadline too, so a multi-sitting project
+finishes early instead of on the last night, and a sitting that lands on the day
+before says so ("done a day ahead of the deadline").
+
+**Verified.** `node verify-planner.js` grew from 36 to **41** checks; the five
+new ones pin the rule — a short task is not left on its class-day deadline, a
+task with no class day lands the day before it is due and says why, with room
+only on the deadline the deadline is still used, and no sitting of a spread task
+lands on its deadline. A headless-Chromium run on the real page then seeded one
+task due three days out and confirmed the month view shows it due on the
+deadline with **no** work there and the 30-minute sitting recommended the day
+before, the day view spells out the reason, and nothing threw a console error;
+the landing and to-do pages still load clean.
 
 ---
 

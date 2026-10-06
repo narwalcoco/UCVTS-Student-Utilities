@@ -5,90 +5,40 @@
  * working straight on the saved data so what's on screen is
  * always what's in localStorage.
  *
- * The shape saved under 'ucvts.todo.v1':
+ * This file owns the board: the folders, the tasks, dragging them around,
+ * the completed-tasks fold, the folder lightbox and the right-click menu.
+ * Two things it does NOT own, on purpose:
  *
- *   { folders: [
- *       { id, name, tasks: [
- *           { id, name, due, time, subject, done, important }
- *       ] }
- *   ] }
+ *   · the list itself — todostore.js loads, saves and shapes it, because the
+ *     schedule planner reads and writes the very same list
+ *   · the task lightbox — taskmodal.js builds it, because the planner opens
+ *     the same screen to add a task
  *
- *   · due / time are '' when left blank
- *   · subject is the course name the student picked, or whatever
- *     they typed under "Other"
- *   · done and important are booleans
- *
- * The class names offered in the task lightbox are read straight
- * from the same schedule key the class reminder page writes, so
- * the two pages share one source of truth without this page
- * depending on that page's code.
+ * One source of truth per fact: the to-do page and the planner cannot end up
+ * disagreeing about what a task is or what is on the list.
  * ============================================================ */
 (function () {
   'use strict';
 
   var U = globalThis.UCVTS = globalThis.UCVTS || {};
 
-  var KEY = 'ucvts.todo.v1';
-  var SCHEDULE_KEY = 'ucvts.classpal.schedule.v1';
-  var OTHER = '__other__';
+  /* The list itself lives in todostore.js — the schedule planner writes the
+     same list, so there is one loader and one saver for both pages, and
+     one idea of what a task looks like. */
+  var store = U.todoStore;
+  if (!store) throw new Error('todo.js: todostore.js must load first');
 
-  /* ---------------- storage ---------------- */
+  var state = store.getState();
 
-  function readJSON(key, fallback) {
-    try {
-      var raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch (e) { return fallback; }
-  }
-
-  function load() {
-    var data = readJSON(KEY, null);
-    if (data && Array.isArray(data.folders)) return data;
-    return { folders: [] };
-  }
-
-  function save() {
-    try { localStorage.setItem(KEY, JSON.stringify(state)); }
-    catch (e) { /* private mode — the session still works, it just won't persist */ }
-  }
-
-  var state = load();
+  function save() { store.save(); }
+  function uid() { return store.uid(); }
+  function folderById(id) { return store.folderById(id); }
+  function courseNames() { return store.courseNames(); }
 
   /* Which folders have their completed-tasks fold open. Empty on load, so
      every folder starts collapsed; an expanded folder stays open for the
      rest of the session and no further. */
   var doneOpen = {};
-
-  function uid() {
-    return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
-  }
-
-  function folderById(id) {
-    for (var i = 0; i < state.folders.length; i++) {
-      if (state.folders[i].id === id) return state.folders[i];
-    }
-    return null;
-  }
-
-  /* Course names, in the schedule's own row order so the list reads the way
-     the reminder page does — falling back to the object's keys on any page
-     that didn't load calendar.js. Duplicates collapse; blanks are skipped. */
-  function courseNames() {
-    var schedule = readJSON(SCHEDULE_KEY, {});
-    if (!schedule || typeof schedule !== 'object') return [];
-    var seen = {};
-    var out = [];
-    function add(course) {
-      course = String(course == null ? '' : course).trim();
-      if (course && !seen[course]) { seen[course] = true; out.push(course); }
-    }
-    if (U.ROWS) {
-      U.ROWS.forEach(function (row) { add((schedule[row.key] || {}).course); });
-    } else {
-      Object.keys(schedule).forEach(function (k) { add((schedule[k] || {}).course); });
-    }
-    return out;
-  }
 
   /* ---------------- small helpers ---------------- */
 
@@ -99,23 +49,7 @@
     return node;
   }
 
-  function fmtDue(due, time) {
-    if (!due) return '';
-    var label = due;
-    var d = new Date(due + 'T00:00:00');
-    if (!isNaN(d.getTime())) {
-      label = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-    }
-    if (time) {
-      var parts = String(time).split(':');
-      var h = parseInt(parts[0], 10);
-      var m = parts[1] || '00';
-      var ampm = h >= 12 ? 'pm' : 'am';
-      h = h % 12; if (h === 0) h = 12;
-      label += ' · ' + h + ':' + m + ' ' + ampm;
-    }
-    return 'Due ' + label;
-  }
+  function fmtDue(due, time) { return store.fmtDue(due, time); }
 
   /* ---------------- the board ---------------- */
 
@@ -487,7 +421,7 @@
     var t = e.target;
 
     var addBtn = t.closest('[data-add-task]');
-    if (addBtn) { openTaskModal(addBtn.dataset.addTask, null); return; }
+    if (addBtn) { openTask(addBtn.dataset.addTask, null); return; }
 
     var doneBtn = t.closest('[data-toggle-done]');
     if (doneBtn) { toggleDone(doneBtn.dataset.folderId, doneBtn.dataset.toggleDone); return; }
@@ -606,7 +540,7 @@
     if (!btn || !ctxTarget) return;
     var target = ctxTarget;
     hideCtx();
-    if (btn.dataset.ctx === 'edit') openTaskModal(target.folderId, target.taskId);
+    if (btn.dataset.ctx === 'edit') openTask(target.folderId, target.taskId);
     else if (btn.dataset.ctx === 'delete') deleteTask(target.folderId, target.taskId);
   });
 
@@ -632,7 +566,9 @@
     if (!e.target.closest('#ctxMenu')) hideCtx();
   });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') { closeAllPops(); hideCtx(); closeModal('taskModal'); closeModal('folderModal'); }
+    /* The task lightbox handles its own Escape; this closes the page's own
+       folder lightbox and menus. */
+    if (e.key === 'Escape') { closeAllPops(); hideCtx(); closeModal('folderModal'); }
   });
   board.addEventListener('scroll', function () { hideCtx(); }, true);
   globalThis.addEventListener('resize', function () { hideCtx(); });
@@ -653,112 +589,23 @@
     if (!document.querySelector('.modal:not([hidden])')) document.body.classList.remove('modal-open');
   }
 
-  document.querySelectorAll('[data-close]').forEach(function (btn) {
+  document.querySelectorAll('#folderModal [data-close]').forEach(function (btn) {
     btn.addEventListener('click', function () { closeModal(btn.dataset.close); });
   });
 
-  /* ---- the task lightbox ---- */
+  /* ---- the task lightbox ----
+     Shared with the schedule planner: both pages open taskmodal.js, so the
+     screen that creates a task is the same screen everywhere. The to-do
+     page always knows which folder a new task goes in (the one whose ＋ was
+     clicked), so it never needs the planner's subject-based resolver. */
 
-  var taskModal = document.getElementById('taskModal');
-  var taskModalTitle = document.getElementById('taskModalTitle');
-  var taskName = document.getElementById('taskName');
-  var taskDue = document.getElementById('taskDue');
-  var taskTime = document.getElementById('taskTime');
-  var taskSubject = document.getElementById('taskSubject');
-  var taskOtherField = document.getElementById('taskOtherField');
-  var taskOther = document.getElementById('taskOther');
-  var taskError = document.getElementById('taskError');
-
-  var editing = null;            // { folderId, taskId } when editing, null when adding
-  var editingTargetFolder = null; // where a brand-new task gets filed
-
-  function fillSubjects(selected) {
-    taskSubject.innerHTML = '';
-    var blank = el('option', null, '— none —');
-    blank.value = '';
-    taskSubject.appendChild(blank);
-    courseNames().forEach(function (course) {
-      var opt = el('option', null, course);
-      opt.value = course;
-      taskSubject.appendChild(opt);
+  function openTask(folderId, taskId) {
+    U.taskModal.open({
+      folderId: folderId,
+      taskId: taskId || null,
+      onSaved: render
     });
-    var other = el('option', null, 'Other…');
-    other.value = OTHER;
-    taskSubject.appendChild(other);
-
-    if (selected && selected !== OTHER && courseNames().indexOf(selected) === -1) {
-      /* a subject saved earlier that is no longer in the schedule: keep it */
-      var keep = el('option', null, selected);
-      keep.value = selected;
-      taskSubject.insertBefore(keep, other);
-    }
-    taskSubject.value = selected || '';
-    syncOtherField();
   }
-
-  function syncOtherField() {
-    taskOtherField.hidden = taskSubject.value !== OTHER;
-  }
-
-  taskSubject.addEventListener('change', syncOtherField);
-
-  function openTaskModal(folderId, taskId) {
-    editing = taskId ? { folderId: folderId, taskId: taskId } : null;
-    editingTargetFolder = taskId ? null : folderId;
-    var task = null;
-    if (taskId) {
-      var folder = folderById(folderId);
-      task = folder && folder.tasks.find(function (x) { return x.id === taskId; });
-    }
-    taskModalTitle.textContent = taskId ? 'Edit task' : 'New task';
-    taskName.value = task ? task.name : '';
-    taskDue.value = task ? task.due : '';
-    taskTime.value = task ? task.time : '';
-    taskOther.value = task && courseNames().indexOf(task.subject) === -1 && task.subject ? task.subject : '';
-    fillSubjects(task ? (task.subject && courseNames().indexOf(task.subject) === -1 ? OTHER : task.subject) : '');
-    taskError.hidden = true;
-    openModal('taskModal');
-    setTimeout(function () { taskName.focus(); }, 0);
-  }
-
-  document.getElementById('taskSaveBtn').addEventListener('click', function () {
-    var name = taskName.value.trim();
-    if (!name) {
-      taskError.textContent = 'Give the task a name.';
-      taskError.hidden = false;
-      taskName.focus();
-      return;
-    }
-    var subject = taskSubject.value;
-    if (subject === OTHER) subject = taskOther.value.trim();
-
-    if (editing) {
-      var folder = folderById(editing.folderId);
-      var task = folder && folder.tasks.find(function (x) { return x.id === editing.taskId; });
-      if (task) {
-        task.name = name;
-        task.due = taskDue.value;
-        task.time = taskTime.value;
-        task.subject = subject;
-      }
-    } else if (editingTargetFolder) {
-      var targetFolder = folderById(editingTargetFolder);
-      if (targetFolder) {
-        targetFolder.tasks.push({
-          id: uid(),
-          name: name,
-          due: taskDue.value,
-          time: taskTime.value,
-          subject: subject,
-          done: false,
-          important: false
-        });
-      }
-    }
-    save();
-    render();
-    closeModal('taskModal');
-  });
 
   /* ---- the folder lightbox (new & rename) ---- */
 
@@ -802,9 +649,6 @@
 
   folderName.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') document.getElementById('folderSaveBtn').click();
-  });
-  taskName.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') document.getElementById('taskSaveBtn').click();
   });
 
   /* ---------------- boot ---------------- */

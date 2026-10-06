@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schedule Planner · UCVTS Student Tools</title>
+  <meta name="description" content="A month, week and day plan of your homework, worked out from your classes, their A-day or B-day, the deadline, and how much time you have each day.">
+  <meta name="theme-color" content="#16295c" id="themeColor">
+  <link rel="icon" type="image/png" href="ucvts_logo.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- The same weather sky and school photo as everywhere else; reminders
+       keep firing while you plan here, too. -->
+  <canvas id="skyFar" aria-hidden="true"></canvas>
+  <canvas id="skyNear" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scene-photo" id="scenePhoto" aria-hidden="true"></div>
+
+  <div class="page" id="page">
+
+    <!-- ============ background switch ============ -->
+    <div class="top-bar">
+      <button class="motion-btn" id="focusBtn" type="button"
+              title="Hide the page and show just the school in the weather">Hide the page</button>
+      <button class="motion-btn" id="motionBtn" type="button" aria-pressed="true">Motion: on</button>
+    </div>
+
+    <!-- ============ header ============ -->
+    <header class="hero">
+      <a class="hero-home" href="index.html" title="Back to UCVTS Student Tools">
+        <span class="hero-logo" aria-hidden="true"><img src="ucvts_logo.png" alt="" decoding="async"></span>
+        <h1>Schedule Planner</h1>
+      </a>
+    </header>
+
+    <p class="page-lead">
+      Your tasks from the to-do list, laid out on a calendar. The planner works
+      out when to do each one from the class it's for, the day that class meets
+      (A or B), when it's due, and how much homework time you have — then spreads
+      the long ones (projects, essays, study) across several days.
+    </p>
+
+    <div class="planner-wrap">
+
+      <!-- ============ the toolbar ============ -->
+      <div class="planner-bar">
+        <button type="button" class="btn" id="addTaskBtn">＋ Add a task</button>
+        <button type="button" class="ghost-btn" id="configBtn">Configure</button>
+
+        <span class="planner-spacer"></span>
+
+        <div class="view-switch" role="group" aria-label="Calendar view">
+          <button type="button" data-view="month" aria-pressed="true">Month</button>
+          <button type="button" data-view="week" aria-pressed="false">Week</button>
+          <button type="button" data-view="day" aria-pressed="false">Day</button>
+        </div>
+
+        <div class="planner-nav">
+          <button type="button" class="ghost-btn nav-arrow" id="prevBtn" aria-label="Previous">‹</button>
+          <span class="planner-title" id="plannerTitle" aria-live="polite">…</span>
+          <button type="button" class="ghost-btn nav-arrow" id="nextBtn" aria-label="Next">›</button>
+          <button type="button" class="ghost-btn" id="todayBtn">Today</button>
+        </div>
+      </div>
+
+      <p class="planner-summary muted" id="planSummary"></p>
+
+      <!-- built entirely by planner.js -->
+      <section class="cal" id="calendar" aria-label="Homework calendar"></section>
+
+      <p class="planner-legend muted">
+        <span class="legend-key due">task due</span>
+        <span class="legend-key work">📚 recommended work</span>
+        <span class="legend-key ab">🍎 A-Day / 🫐 B-Day</span>
+      </p>
+
+    </div>
+
+    <p class="page-foot muted">
+      Made for a browser on this device only — no account, no server, nothing
+      leaves this computer.
+    </p>
+
+  </div>
+
+  <!-- Reminder pop-ups — the engine fires on every page of the site. -->
+  <div class="toasts" id="toasts" aria-live="assertive"></div>
+
+  <!-- ---------- the planner settings lightbox ---------- -->
+  <div class="modal" id="configModal" hidden>
+    <div class="modal-backdrop" data-close="configModal"></div>
+    <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="configTitle">
+      <h2 class="modal-title" id="configTitle">Set up your planner</h2>
+      <p class="config-lede muted">
+        How many hours can you give homework each day? The planner fills that
+        time in order of what's due soonest, and never past a deadline.
+      </p>
+
+      <div class="planner-section">Hours for homework each day</div>
+      <div class="hours-host" id="hoursHost"></div>
+
+      <div class="planner-section">Keywords</div>
+      <p class="config-note muted">
+        A word in a task's name sets how long it needs — "study" an hour, "worksheet"
+        twenty minutes. <b>Spread</b> splits the long ones across several days.
+      </p>
+      <div class="kw-head">
+        <span>Keyword</span><span>Minutes</span><span>Spread</span><span></span>
+      </div>
+      <div class="kw-list" id="kwList"></div>
+      <button type="button" class="ghost-btn kw-add" id="addKwBtn">＋ Add keyword</button>
+
+      <div class="planner-section">When nothing matches</div>
+      <label class="field cfg-default">
+        <span class="field-label">Default time per task (minutes)</span>
+        <input type="number" id="defaultMinutes" min="5" max="300" step="5">
+      </label>
+
+      <p class="field-error" id="configError" hidden></p>
+
+      <div class="modal-actions config-actions">
+        <button type="button" class="ghost-btn" id="configResetBtn">Reset</button>
+        <span class="planner-spacer"></span>
+        <button type="button" class="ghost-btn" data-close="configModal">Cancel</button>
+        <button type="button" class="btn" id="configSaveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- shown briefly when the page fades away, so it's clear how to get it back -->
+  <p class="scene-hint" id="sceneHint" aria-hidden="true">click anywhere to bring it back</p>
+
+  <script src="calendar.js"></script>
+  <script src="day.js"></script>
+  <script src="clock.js"></script>
+  <script src="sky.js"></script>
+  <script src="scene.js"></script>
+  <script src="reminders.js"></script>
+  <script src="todostore.js"></script>
+  <script src="taskmodal.js"></script>
+  <script src="plan.js"></script>
+  <script src="planner.js"></script>
+</body>
+</html>
