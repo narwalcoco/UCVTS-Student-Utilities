@@ -197,6 +197,7 @@
     var due = fmtDue(task.due, task.time);
     if (due) main.appendChild(el('span', 'todo-task-due', due));
     if (task.subject) main.appendChild(el('span', 'todo-task-subject', task.subject));
+    if (task.minutes) main.appendChild(el('span', 'todo-task-minutes', '🕒 ' + task.minutes + ' min'));
 
     var star = el('button', 'todo-star' + (task.important ? ' is-on' : ''), task.important ? '★' : '☆');
     star.type = 'button';

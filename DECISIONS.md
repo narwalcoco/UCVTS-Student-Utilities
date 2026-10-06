@@ -20,7 +20,7 @@ this says what it cost to find out.
 
 ## Where things stand
 
-_Last updated 2026-10-05 EDT_
+_Last updated 2026-10-06 EDT_
 
 The site is a weather-aware A-day/B-day class reminder for a UCVTS student. It
 shows today's status, the student's own schedule, today's classes, and heads-up
@@ -49,7 +49,9 @@ to-do list on a month/week/day calendar, with a recommended day (or days) to do
 each piece of work worked out from the class it's for, whether that class meets
 on an A-day or a B-day, the deadline, the hours you have each day, and keywords
 like "study" and "worksheet" — and the task lightbox shared between it and the
-to-do page so one list has one editor.
+to-do page so one list has one editor. Most recently: a task can carry the
+student's own **time estimate** — an optional "Time needed" box in the shared
+lightbox — which the planner trusts over its keyword guess.
 
 **Next:** the soroban trainer page, then the reminder list and the emoji.
 
@@ -1416,6 +1418,43 @@ task due three days out and confirmed the month view shows it due on the
 deadline with **no** work there and the 30-minute sitting recommended the day
 before, the day view spells out the reason, and nothing threw a console error;
 the landing and to-do pages still load clean.
+
+---
+
+### 2026-10-06 — a task can say how long it will take
+
+**The ask:** an optional "how much time I think I'll need" input when creating
+or editing a task.
+
+**The student's number wins.** Until now the planner guessed how long a task
+would take from keywords in its name — "study" an hour, "worksheet" twenty
+minutes, otherwise the 30-minute default. That guess is fine as a default but
+it is only ever the planner's opinion, so a task can now carry its own
+`minutes`, typed by hand in the shared task lightbox. `plan.js`'s
+`estimateMinutes()` takes that value as an override and returns it ahead of any
+keyword; the keyword is still consulted, but only for its *shape*, so a
+hand-typed hour of "study" is still spread across days while a hand-typed hour
+of "read chapter 5" is a plain single task. Long totals are cut into the usual
+45-minute sittings either way, so nothing about the sitting rule changed.
+
+**One home for the number.** `todostore.js` owns what a valid estimate is — a
+positive whole number, or `''` for "not given" — through a `cleanMinutes()`
+helper, so the modal cannot save `-3` or `"abc"` and the planner can tell "the
+student said nothing" apart from "the student said zero". The field itself is a
+number input in `taskmodal.js` (the lightbox both pages share), the to-do card
+shows the estimate as a small amber line, and the planner's day and week views
+mark a hand-typed figure with a "Your own estimate" tooltip.
+
+**Verified.** `node --check` on every touched file. `verify-site.js` grew from
+21 to **31** checks (ten for the store's estimate cleaning) and
+`verify-planner.js` from 41 to **52** (eleven for the override: it beats the
+keyword, is flagged as the student's own, keeps a keyword's spread, leaves the
+guess alone when blank, and still splits a hand-typed 90 into two sittings). A
+headless-Chromium run then drove the **real** modal on the served site: the
+field is there and labelled, a 75 is stored as a number and the card shows it,
+the right-click → edit path reopens it at 75, clearing it drops the line, a
+negative is refused, and a seeded 90-minute task makes the planner's month view
+total 90 minutes with the day view agreeing — with no console errors.
 
 ---
 

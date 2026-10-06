@@ -59,6 +59,11 @@
         '<input type="text" id="taskOther" maxlength="80" placeholder="e.g. Robotics Club" autocomplete="off">' +
       '</label>' +
 
+      '<label class="field">' +
+        '<span class="field-label">Time needed <span class="field-opt">optional, in minutes</span></span>' +
+        '<input type="number" id="taskMinutes" min="5" max="600" step="5" inputmode="numeric" placeholder="e.g. 30" autocomplete="off">' +
+      '</label>' +
+
       '<p class="field-error" id="taskError" hidden></p>' +
 
       '<div class="modal-actions">' +
@@ -101,6 +106,7 @@
       subject: document.getElementById('taskSubject'),
       otherField: document.getElementById('taskOtherField'),
       other: document.getElementById('taskOther'),
+      minutes: document.getElementById('taskMinutes'),
       error: document.getElementById('taskError'),
       save: document.getElementById('taskSaveBtn')
     };
@@ -187,6 +193,7 @@
     els.name.value = task ? task.name : '';
     els.due.value = task ? task.due : (opts.due || '');
     els.time.value = task ? task.time : '';
+    els.minutes.value = task && task.minutes ? String(task.minutes) : (opts.minutes || '');
 
     /* A subject that is not one of the offered courses was typed under
        "Other", so reopen it there with the text preserved. */
@@ -216,7 +223,8 @@
     var saved = null;
     if (ctx.taskId) {
       saved = store.updateTask(ctx.folderId, ctx.taskId, {
-        name: name, due: els.due.value, time: els.time.value, subject: subject
+        name: name, due: els.due.value, time: els.time.value, subject: subject,
+        minutes: els.minutes.value
       });
       if (!saved) { fail('That task is gone from the list.'); return; }
     } else {
@@ -224,7 +232,8 @@
       if (!folderId && ctx.resolveFolder) folderId = ctx.resolveFolder(subject);
       if (!folderId) { fail('Pick a subject, or add a folder on the to-do page first.'); return; }
       saved = store.addTask(folderId, {
-        name: name, due: els.due.value, time: els.time.value, subject: subject
+        name: name, due: els.due.value, time: els.time.value, subject: subject,
+        minutes: els.minutes.value
       });
       if (!saved) { fail('Could not find a folder for that task.'); return; }
     }

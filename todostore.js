@@ -11,13 +11,16 @@
  *
  *   { folders: [
  *       { id, name, tasks: [
- *           { id, name, due, time, subject, done, important }
+ *           { id, name, due, time, subject, minutes, done, important }
  *       ] }
  *   ] }
  *
  *   · due / time are '' when left blank
  *   · subject is the course name the student picked, or whatever
  *     they typed under "Other"
+ *   · minutes is the student's own estimate of how long the task will take,
+ *     in whole minutes, or '' when they didn't give one — the planner then
+ *     falls back to guessing from keywords in the name
  *   · done and important are booleans
  *
  * The state is a single object for the whole session (`getState()`), so a
@@ -101,6 +104,15 @@
     return folder;
   }
 
+  /* The student's own time estimate, in whole minutes. A blank, zero or
+     nonsense value becomes '' — "I didn't say" — so the planner knows to
+     guess from the task's keywords instead of trusting a bad number. */
+  function cleanMinutes(value) {
+    var n = Number(value);
+    if (!isFinite(n) || n <= 0) return '';
+    return Math.round(n);
+  }
+
   function newTask(fields) {
     fields = fields || {};
     return {
@@ -109,6 +121,7 @@
       due: fields.due || '',
       time: fields.time || '',
       subject: fields.subject || '',
+      minutes: cleanMinutes(fields.minutes),
       done: false,
       important: !!fields.important
     };
@@ -131,6 +144,7 @@
     if ('due' in fields) task.due = fields.due;
     if ('time' in fields) task.time = fields.time;
     if ('subject' in fields) task.subject = fields.subject;
+    if ('minutes' in fields) task.minutes = cleanMinutes(fields.minutes);
     return task;
   }
 
@@ -198,6 +212,7 @@
     folderByName: folderByName,
     ensureFolder: ensureFolder,
     newTask: newTask,
+    cleanMinutes: cleanMinutes,
     addTask: addTask,
     updateTask: updateTask,
     courseNames: courseNames,

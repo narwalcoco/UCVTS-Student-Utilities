@@ -124,6 +124,7 @@
         subject: t.subject || '',
         due: t.due || '',
         time: t.time || '',
+        minutes: t.minutes == null ? '' : t.minutes,
         done: !!t.done,
         important: !!t.important,
         folderName: row.folderName
@@ -184,7 +185,9 @@
 
   function workItem(w) {
     var li = el('li', 'plan-item work');
-    li.appendChild(el('span', 'plan-min', fmtMin(w.minutes)));
+    var min = el('span', 'plan-min', fmtMin(w.minutes));
+    if (w.custom) min.title = 'Your own estimate';
+    li.appendChild(min);
     var main = el('div', 'plan-main');
     main.appendChild(el('span', 'plan-name', w.name));
     var meta = [];
@@ -291,7 +294,9 @@
         var workList = el('ul', 'wk-list');
         work.forEach(function (w) {
           var li = el('li', 'wk-item work');
-          li.appendChild(el('span', 'wk-min', fmtMin(w.minutes)));
+          var min = el('span', 'wk-min', fmtMin(w.minutes));
+          if (w.custom) min.title = 'Your own estimate';
+          li.appendChild(min);
           li.appendChild(el('span', 'wk-name', w.name));
           if (w.reason) li.title = w.reason;
           workList.appendChild(li);

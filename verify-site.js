@@ -1,9 +1,10 @@
 /* =====================================================================
  * verify-site.js — smoke test for the site-wide pieces.
  *
- * The browser pages can't be driven from Node, but the two files that
- * make the site one site — day.js (what today is) and reminders.js
- * (when a heads-up fires) — are pure logic, exactly like calendar.js.
+ * The browser pages can't be driven from Node, but the files that make
+ * the site one site — day.js (what today is), reminders.js (when a
+ * heads-up fires) and todostore.js (the one list both pages read) — are
+ * pure logic, exactly like calendar.js.
  * This loads them with the smallest possible stub for the browser
  * globals they merely *touch* (clock.js's document/localStorage), and
  * asserts the behaviour the whole multi-page design rests on:
@@ -12,6 +13,8 @@
  *   · the engine derives the same reminder moments the page used to
  *   · a due heads-up fires exactly once, and is remembered as fired
  *   · a school day's moments are empty when no classes are entered
+ *   · a task's hand-typed time estimate is kept only when it is a real
+ *     positive number, and blank otherwise
  *
  * Run: node verify-site.js
  * ===================================================================== */
@@ -41,6 +44,7 @@ require('./calendar.js');
 require('./day.js');
 require('./clock.js');
 require('./reminders.js');
+require('./todostore.js');
 
 var U = globalThis.UCVTS;
 
@@ -185,6 +189,34 @@ check('after refire, the same moment can fire again',
 /* And on a day off, nothing fires at all. */
 U.clock.setSimulated(new Date(2026, 8, 7, 7, 51, 0));   // Labor Day
 check('a closed day fires nothing', announcements.length, 3);
+
+/* ---------------- todostore.js: the student's own time estimate ---------------- */
+
+console.log('\n🗒️  todostore.js: the hand-typed estimate');
+
+var S = U.todoStore;
+check('a new task carries the estimate', S.newTask({ name: 'x', minutes: 25 }).minutes, 25);
+check('a new task with no estimate stores blank', S.newTask({ name: 'x' }).minutes, '');
+check('a blank estimate stays blank', S.cleanMinutes(''), '');
+check('zero is not an estimate', S.cleanMinutes(0), '');
+check('a negative estimate is refused', S.cleanMinutes(-5), '');
+check('nonsense is refused', S.cleanMinutes('abc'), '');
+check('a numeric string is kept as a number', S.cleanMinutes('45'), 45);
+check('a decimal estimate is rounded', S.cleanMinutes(30.6), 31);
+check('editing can set an estimate',
+  (function () {
+    var folder = S.ensureFolder('Estimate test');
+    var task = S.addTask(folder.id, { name: 'y', minutes: 40 });
+    S.updateTask(folder.id, task.id, { minutes: 15 });
+    return task.minutes;
+  })(), 15);
+check('and clearing it goes back to blank',
+  (function () {
+    var folder = S.folderByName('Estimate test');
+    var task = folder.tasks[0];
+    S.updateTask(folder.id, task.id, { minutes: '' });
+    return task.minutes;
+  })(), '');
 
 /* ---------------- done ---------------- */
 

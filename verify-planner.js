@@ -7,6 +7,7 @@
  * feature rests on:
  *
  *   · a task's keyword sets its estimate, and nothing matches → 30 min
+ *   · a hand-typed estimate overrides the keyword guess
  *   · a long task is cut into sittings of at most 45 minutes
  *   · a class's A/B day is read from the same schedule the reminder page uses
  *   · work lands on a day the class meets, and never after the deadline
@@ -73,6 +74,48 @@ check('a 90-minute total splits 45/45 even without the spread flag',
 check('exactly 45 stays one sitting', P.splitSessions(45, false), [45]);
 check('every sitting is at most 45 minutes',
   P.splitSessions(200, true).every(function (m) { return m <= 45; }), true);
+
+/* ---------------- the student's own estimate ---------------- */
+
+console.log('\n✍️  a hand-typed estimate');
+
+check('a hand-typed estimate beats the keyword',
+  P.estimateMinutes('Worksheet 2', 'Algebra 2', null, 30, 45).minutes, 45);
+check('and is flagged as the student\u2019s own',
+  P.estimateMinutes('Worksheet 2', 'Algebra 2', null, 30, 45).custom, true);
+check('a task that reads like a spread job still spreads',
+  P.estimateMinutes('Study for the quiz', 'Algebra 2', null, 30, 75).spread, true);
+check('and keeps the keyword it matched',
+  P.estimateMinutes('Study for the quiz', 'Algebra 2', null, 30, 75).word, 'study');
+check('a task with no keyword is a one-off',
+  P.estimateMinutes('Read chapter 5', 'English', null, 30, 50).spread, false);
+check('a blank estimate leaves the keyword guess alone',
+  P.estimateMinutes('Worksheet 2', 'Algebra 2', null, 30, '').minutes, 20);
+
+/* These read a whole plan, so they pin the day themselves rather than
+   leaning on the helper defined further down the file. */
+var ownToday = at('2026-09-14');
+var ownPlan = function (tasks) {
+  return P.buildPlan({
+    tasks: tasks, config: config, schedule: schedule,
+    today: ownToday, horizonDays: 30
+  });
+};
+
+var own = {
+  id: 't7', name: 'Read chapter 5', subject: 'Algebra 2', due: '2026-09-18',
+  minutes: 90, done: false, important: false
+};
+var pOwn = ownPlan([own]);
+check('the plan uses the hand-typed total', pOwn.planned[0].minutes, 90);
+check('and marks it as the student\u2019s own', pOwn.planned[0].custom, true);
+check('a hand-typed 90 still becomes two sittings',
+  pOwn.planned[0].sessions.length, 2);
+check('each sitting is at most 45 minutes',
+  pOwn.planned[0].sessions.every(function (s) { return s.minutes <= 45; }), true);
+check('a hand-typed 20 is one sitting of 20',
+  ownPlan([{ id: 't8', name: 'Read chapter 5', subject: '', due: '2026-09-17', minutes: 20, done: false, important: false }])
+    .planned[0].sessions[0].minutes, 20);
 
 /* ---------------- class days ---------------- */
 

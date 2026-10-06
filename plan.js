@@ -23,12 +23,16 @@
  *                                       shared out across every task
  *   · keywords in the task's name     → "study" needs an hour, "worksheet"
  *                                       twenty minutes (config-controlled)
+ *   · the student's own estimate      → a task can carry a minutes value
+ *                                       entered by hand, which beats any
+ *                                       keyword guess
  *   · long assignments                → a project or essay is split into
  *                                       45-minute sittings on separate days
  *
  * Estimates and sessions
  * ----------------------
- *   estimateMinutes() finds the longest/highest-paying keyword in the task's
+ *   estimateMinutes() prefers the student's own number when the task has
+ *   one; otherwise it finds the longest/highest-paying keyword in the task's
  *   name (and subject) and pays that; no keyword pays a default (30 min).
  *   splitSessions() then cuts the total into sittings of at most 45 minutes.
  *   A short task is one sitting; a "spread" task (project, essay, study…)
@@ -104,9 +108,18 @@
 
   /* ---------------- estimates ---------------- */
 
-  /* The single keyword that pays the most for this task's name + subject.
-     When two pay the same, the longer word is the more specific one. */
-  function estimateMinutes(name, subject, keywords, fallback) {
+  /* How long a task is expected to take.
+
+     The student's own estimate — a positive `override` entered with the task
+     — is the answer when there is one; a keyword is only ever the planner's
+     guess, so it never overrules what the student said. A task that still
+     reads like a spread kind of job (its name matches a spread keyword) keeps
+     that habit, so a hand-typed hour of "study" is still spaced out.
+
+     Without an override: the single keyword that pays the most for this
+     task's name + subject wins; when two pay the same, the longer word is
+     the more specific one; no keyword pays the default. */
+  function estimateMinutes(name, subject, keywords, fallback, override) {
     var hay = (String(name == null ? '' : name) + ' ' + String(subject == null ? '' : subject)).toLowerCase();
     var list = Array.isArray(keywords) && keywords.length ? keywords : DEFAULT_KEYWORDS;
     var best = null;
@@ -118,6 +131,15 @@
         best = { word: kw.word, minutes: minutes, spread: !!kw.spread };
       }
     });
+    var own = Number(override);
+    if (isFinite(own) && own > 0) {
+      return {
+        word: best ? best.word : null,
+        minutes: Math.round(own),
+        spread: best ? best.spread : false,
+        custom: true
+      };
+    }
     if (best) return best;
     var d = Number(fallback) > 0 ? Math.round(Number(fallback)) : DEFAULT_MINUTES;
     return { word: null, minutes: d, spread: false };
@@ -275,7 +297,7 @@
     ordered.forEach(function (task) {
       var due = parseKey(task.due);
       var late = due < today;
-      var est = estimateMinutes(task.name, task.subject, config.keywords, config.defaultMinutes);
+      var est = estimateMinutes(task.name, task.subject, config.keywords, config.defaultMinutes, task.minutes);
       var sizes = splitSessions(est.minutes, est.spread);
       var classDays = classDaysFor(task.subject, schedule);
 
@@ -325,7 +347,8 @@
             name: task.name,
             subject: task.subject || '',
             minutes: s.minutes,
-            reason: s.reason
+            reason: s.reason,
+            custom: !!est.custom
           });
         });
         planned.push({
@@ -337,6 +360,7 @@
           minutes: est.minutes,
           keyword: est.word,
           spread: est.spread,
+          custom: !!est.custom,
           partial: sessions.length < sizes.length,
           sessions: sessions
         });
@@ -347,7 +371,8 @@
           subject: task.subject || '',
           due: task.due,
           minutes: est.minutes,
-          keyword: est.word
+          keyword: est.word,
+          custom: !!est.custom
         });
       }
     });

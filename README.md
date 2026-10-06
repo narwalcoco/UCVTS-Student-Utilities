@@ -44,8 +44,8 @@ different origin, and permission belongs to the origin.
 | `class-reminder.html` | the class reminder: the day card, the schedule, today's classes, reminder state, the module shelf |
 | `focus-timer.html` | the focus timer on a page of its own: the same module shelf carrying the one module, nothing else |
 | `calculator.html` | a TI‑84 Plus CE: the real emulator Texas Instruments ships for TestNav, booted into the site theme |
-| `todo.html` | the to-do list maker: a folder per class, drag-to-reorder tasks, due dates and stars, saved on the device |
-| `planner.html` | the schedule planner: your tasks on a month/week/day calendar, with a recommended day to do each one worked out from your classes, their A/B day, and the hours you have |
+| `todo.html` | the to-do list maker: a folder per class, drag-to-reorder tasks, due dates, stars and each task's own time estimate, saved on the device |
+| `planner.html` | the schedule planner: your tasks on a month/week/day calendar, with a recommended day to do each one worked out from your classes, their A/B day, the hours you have, and how long you say each one needs |
 
 They are deliberately siblings — same stylesheet, same sky, same clock, same
 photo. The landing page is not a thinner copy of the reminder page; it is the
@@ -66,8 +66,8 @@ wherever you are.
 | `todo.js` | to-do list glue: drag-and-drop reorder (folders by their grip, in any row, with a vertical insertion line), the folded completed-tasks section, the folder lightbox and the context menu |
 | `planner.html` | the schedule planner: the toolbar, the calendar host, and the settings lightbox |
 | `planner.js` | planner glue: the month/week/day calendar, the settings menu (hours and keywords), and the wiring — it draws what `plan.js` decides |
-| `plan.js` | **when to do the homework**. Pure logic, no DOM: keyword estimates, 45-minute sittings, A/B class days, and the day-by-day plan — which prefers work a day before the deadline. Runs in Node so it can be tested |
-| `todostore.js` | the saved to-do list in one place: the loader, the saver, folder/task helpers and the shared due-line format. Both the to-do page and the planner read and write through it |
+| `plan.js` | **when to do the homework**. Pure logic, no DOM: time estimates (a hand-typed one wins over the keyword guess), 45-minute sittings, A/B class days, and the day-by-day plan — which prefers work a day before the deadline. Runs in Node so it can be tested |
+| `todostore.js` | the saved to-do list in one place: the loader, the saver, folder/task helpers, the shared due-line format, and what counts as a valid time estimate. Both the to-do page and the planner read and write through it |
 | `taskmodal.js` | the task lightbox, shared by both pages, so a task made on the planner is the same task the to-do page makes |
 | `calculator-page.js` | boots the TI‑84: the XHR proxy, the data-URL wiring, and the plain-language failure if the emulator can't load |
 | `home.js` | landing-page glue: the day strip and the reminder pill |
@@ -327,15 +327,15 @@ flip side is that a different browser looks fresh.
 | `ucvts.sky.v1` | a pinned sky, if the user chose one instead of following the weather |
 | `ucvts.season.v1` | a pinned season photo, if the user chose one |
 | `ucvts.motion.v1` | whether background motion is on |
-| `ucvts.todo.v1` | the to-do list: folders, and each folder's tasks with their due date, subject, star and done state — **read and written by both the to-do page and the planner** |
+| `ucvts.todo.v1` | the to-do list: folders, and each folder's tasks with their due date, subject, own time estimate, star and done state — **read and written by both the to-do page and the planner** |
 | `ucvts.planner.v1` | the planner's settings: whether it has been set up, the hours available for homework each weekday, the keyword → minutes table, and the default time per task |
 
 ## Testing
 
 ```bash
 node verify-calendar.js      # 42 assertions about the school year
-node verify-site.js          # 21 assertions about the shared day summary and the reminder engine
-node verify-planner.js       # 41 assertions about the keyword estimates and the recommended plan
+node verify-site.js          # 31 assertions about the shared day summary, the reminder engine and the to-do store
+node verify-planner.js       # 52 assertions about the time estimates and the recommended plan
 ```
 
 There's no browser test runner. Verification in this project is done by

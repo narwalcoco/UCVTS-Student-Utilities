@@ -1933,6 +1933,15 @@ body.ti84 {
   color: var(--muted);
 }
 
+/* The student's own estimate of how long the task will take. */
+.todo-task-minutes {
+  font-size: 11.5px;
+  color: var(--warm);
+  opacity: 0.9;
+}
+
+.todo-task.is-done .todo-task-minutes { opacity: 0.5; }
+
 /* A sliver of space at the right that reveals a star on hover. */
 .todo-star {
   flex: 0 0 auto;
